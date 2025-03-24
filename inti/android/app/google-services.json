@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "390902626881",
+    "project_id": "inti-enrolment-system",
+    "storage_bucket": "inti-enrolment-system.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:390902626881:android:f8a14a96a24be7a68764c0",
+        "android_client_info": {
+          "package_name": "com.example.inti"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA5A3NdSfTBRX25UnxWoBV88cZnmMn5cqg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
