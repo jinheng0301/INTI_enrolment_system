@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inti/common/widgets/error.dart';
-import 'package:inti/screens_&_features/landing/auth/screens/login_screen.dart';
-import 'package:inti/screens_&_features/landing/auth/screens/sign_up_screen.dart';
+import 'package:inti/screens_&_features/auth/screens/login_screen.dart';
+import 'package:inti/screens_&_features/auth/screens/sign_up_screen.dart';
 import 'package:inti/screens_&_features/landing/landing_screen.dart';
 
 Route<dynamic> onGenerateRoute(RouteSettings settings) {
