@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inti/common/repositories/common_firebase_storage_repository.dart';
 import 'package:inti/common/utils/utils.dart';
 import 'package:inti/models/users.dart';
-import 'package:inti/screens_&_features/dashboard_screen.dart';
+import 'package:inti/screens_&_features/home_screen.dart';
 
 final authRepositoryProvider = Provider(
   (ref) => AuthRepository(
@@ -82,7 +82,7 @@ class AuthRepository {
 
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => DashboardScreen()),
+        MaterialPageRoute(builder: (context) => HomeScreen()),
         (route) => false,
       );
 
@@ -104,15 +104,15 @@ class AuthRepository {
           await firestore.collection('users').doc(auth.currentUser!.uid).get();
       String fetchUsername = doc['username'];
 
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => HomeScreen()),
+        (route) => false,
+      );
+
       showSnackBar(
         context,
         'Signed in to $fetchUsername\'s account successfully',
-      );
-
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => DashboardScreen()),
-        (route) => false,
       );
     } catch (e) {
       showSnackBar(context, e.toString());
