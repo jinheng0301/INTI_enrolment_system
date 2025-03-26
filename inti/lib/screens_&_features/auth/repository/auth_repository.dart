@@ -20,6 +20,7 @@ final authRepositoryProvider = Provider(
 class AuthRepository {
   final FirebaseAuth auth;
   final FirebaseFirestore firestore;
+  var firebaseAuth = FirebaseAuth.instance.currentUser?.uid;
 
   AuthRepository({required this.auth, required this.firestore});
 
@@ -83,7 +84,7 @@ class AuthRepository {
 
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => HomeScreen()),
+        MaterialPageRoute(builder: (context) => HomeScreen(uid: firebaseAuth!)),
         (route) => false,
       );
 
@@ -107,7 +108,7 @@ class AuthRepository {
 
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => HomeScreen()),
+        MaterialPageRoute(builder: (context) => HomeScreen(uid: firebaseAuth!)),
         (route) => false,
       );
 

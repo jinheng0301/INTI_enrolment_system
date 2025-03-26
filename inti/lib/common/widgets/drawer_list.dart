@@ -71,7 +71,7 @@ class _DrawerListState extends ConsumerState<DrawerList> {
                   showSnackBar(context, 'Failed to sign out: $e');
                 }
               },
-              child: Text('Conlan7frim!'),
+              child: Text('Conlan7firm!'),
             ),
           ],
         );

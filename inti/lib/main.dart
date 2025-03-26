@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,6 +22,7 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    var firebaseAuth = FirebaseAuth.instance.currentUser?.uid;
     final authState = ref.watch(authStateProvider);
 
     return MaterialApp(
@@ -32,7 +34,7 @@ class MyApp extends ConsumerWidget {
       onGenerateRoute: (settings) => onGenerateRoute(settings),
       home: authState.when(
         data: (user) {
-          return user != null ? HomeScreen() : LoginScreen();
+          return user != null ? HomeScreen(uid: firebaseAuth!,) : LoginScreen();
         },
         loading: () => const Scaffold(body: Loader()),
         error:
