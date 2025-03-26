@@ -13,14 +13,14 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey =
       GlobalKey<ScaffoldState>(); // ✅ Add a key
-  var firebaseAuth = FirebaseAuth.instance.currentUser!.uid;
+  var firebaseAuth = FirebaseAuth.instance.currentUser?.uid;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey, // ✅ Assign the scaffold key
 
-      drawer: DrawerList(uid: firebaseAuth), // ✅ Add the drawer
+      drawer: DrawerList(uid: firebaseAuth ?? ''), // ✅ Add the drawer
 
       appBar: AppBar(
         backgroundColor: appBarColor,

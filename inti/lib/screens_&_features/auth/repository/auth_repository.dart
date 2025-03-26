@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inti/common/repositories/common_firebase_storage_repository.dart';
 import 'package:inti/common/utils/utils.dart';
 import 'package:inti/models/users.dart';
+import 'package:inti/screens_&_features/auth/screens/login_screen.dart';
 import 'package:inti/screens_&_features/home_screen.dart';
 
 final authRepositoryProvider = Provider(
@@ -77,8 +78,8 @@ class AuthRepository {
           .set(userData, SetOptions(merge: true));
 
       // fetch the username from firebase
-      DocumentSnapshot doc = await firestore.collection('users').doc(uid).get();
-      String fetchUsername = doc['username'];
+      // DocumentSnapshot doc = await firestore.collection('users').doc(uid).get();
+      // String fetchUsername = doc['username'];
 
       Navigator.pushAndRemoveUntil(
         context,
@@ -86,7 +87,7 @@ class AuthRepository {
         (route) => false,
       );
 
-      showSnackBar(context, '$fetchUsername\'s account created successfully');
+      showSnackBar(context, 'Signed up successfully');
     } catch (e) {
       showSnackBar(context, e.toString());
     }
@@ -100,9 +101,9 @@ class AuthRepository {
     try {
       await auth.signInWithEmailAndPassword(email: email, password: password);
 
-      DocumentSnapshot doc =
-          await firestore.collection('users').doc(auth.currentUser!.uid).get();
-      String fetchUsername = doc['username'];
+      // DocumentSnapshot doc =
+      //     await firestore.collection('users').doc(auth.currentUser!.uid).get();
+      // String fetchUsername = doc['username'];
 
       Navigator.pushAndRemoveUntil(
         context,
@@ -110,10 +111,12 @@ class AuthRepository {
         (route) => false,
       );
 
-      showSnackBar(
-        context,
-        'Signed in to $fetchUsername\'s account successfully',
-      );
+      // showSnackBar(
+      //   context,
+      //   'Signed in to $fetchUsername\'s account successfully',
+      // );
+
+      showSnackBar(context, 'Signed in successfully');
     } catch (e) {
       showSnackBar(context, e.toString());
     }
@@ -122,6 +125,13 @@ class AuthRepository {
   Future<void> signOut({required BuildContext context}) async {
     try {
       await auth.signOut();
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => LoginScreen()),
+        (route) => false,
+      );
+
       showSnackBar(context, 'User signed out successfully');
     } catch (e) {
       showSnackBar(context, e.toString());

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inti/common/utils/utils.dart';
+import 'package:inti/screens_&_features/auth/controller/auth_controller.dart';
 
 class DrawerList extends ConsumerStatefulWidget {
   final String uid;
@@ -46,6 +47,38 @@ class _DrawerListState extends ConsumerState<DrawerList> {
     });
   }
 
+  Future<void> _showDialog() async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Are you sure want to sign out?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                try {
+                  // Call the sign-out method from the AuthController
+                  await ref
+                      .read(authControllerProvider)
+                      .signOut(context: context);
+                } catch (e) {
+                  showSnackBar(context, 'Failed to sign out: $e');
+                }
+              },
+              child: Text('Conlan7frim!'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   @override
   Widget build(BuildContext context) {
@@ -87,7 +120,7 @@ class _DrawerListState extends ConsumerState<DrawerList> {
                   Text(
                     userData.isNotEmpty && userData['email'] != null
                         ? userData['email']
-                        : 'No Email', // ✅ Handle null case
+                        : 'No Email',
                     style: TextStyle(fontSize: 16),
                   ),
                 ],
@@ -115,7 +148,7 @@ class _DrawerListState extends ConsumerState<DrawerList> {
             title: Text('Account Management', textAlign: TextAlign.center),
           ),
           ListTile(
-            onTap: () {},
+            onTap: _showDialog,
             title: Text('Sign Out!', textAlign: TextAlign.center),
           ),
         ],

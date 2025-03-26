@@ -54,6 +54,10 @@ class AuthController {
     );
   }
 
+  Future<void> signOut({required BuildContext context}) async {
+    return await authRepository.signOut(context: context);
+  }
+
   Stream<UserModel> userDatabyId(String userId) {
     return authRepository.userDataById(userId);
   }
