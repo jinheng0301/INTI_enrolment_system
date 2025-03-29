@@ -7,8 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inti/common/repositories/common_firebase_storage_repository.dart';
 import 'package:inti/common/utils/utils.dart';
 import 'package:inti/models/users.dart';
-import 'package:inti/screens_&_features/auth/screens/login_screen.dart';
-import 'package:inti/screens_&_features/home_screen.dart';
+import 'package:inti/screens_&_features/admin/admin_home_screen.dart';
+import 'package:inti/screens_&_features/student/auth/screens/login_screen.dart';
+import 'package:inti/screens_&_features/student/screens/student_home_screen.dart';
 
 final authRepositoryProvider = Provider(
   (ref) => AuthRepository(
@@ -46,6 +47,7 @@ class AuthRepository {
     required String email,
     required String password,
     required String username,
+    required String role,
     File? profileImage,
     required WidgetRef ref,
   }) async {
@@ -69,6 +71,7 @@ class AuthRepository {
         'uid': uid,
         'email': email,
         'username': username,
+        'role': role,
         'photoUrl': photoUrl,
         'createdAt': FieldValue.serverTimestamp(),
       };
@@ -82,11 +85,19 @@ class AuthRepository {
       // DocumentSnapshot doc = await firestore.collection('users').doc(uid).get();
       // String fetchUsername = doc['username'];
 
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => HomeScreen(uid: firebaseAuth!)),
-        (route) => false,
-      );
+      if (role == 'student') {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => StudentHomeScreen(uid: uid)),
+          (route) => false,
+        );
+      } else if (role == 'admin') {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => AdminHomeScreen(uid: uid)),
+          (route) => false,
+        );
+      }
 
       showSnackBar(context, 'Signed up successfully');
     } catch (e) {
@@ -102,15 +113,33 @@ class AuthRepository {
     try {
       await auth.signInWithEmailAndPassword(email: email, password: password);
 
-      // DocumentSnapshot doc =
-      //     await firestore.collection('users').doc(auth.currentUser!.uid).get();
-      // String fetchUsername = doc['username'];
+      DocumentSnapshot doc =
+          await firestore.collection('users').doc(auth.currentUser!.uid).get();
 
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => HomeScreen(uid: firebaseAuth!)),
-        (route) => false,
-      );
+      if (!doc.exists) {
+        showSnackBar(context, 'User data not found in Firestore');
+        return;
+      }
+      String role = doc['role'];
+
+      if (role == 'student') {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) => StudentHomeScreen(uid: firebaseAuth.toString()),
+          ),
+          (route) => false,
+        );
+      } else if (role == 'admin') {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AdminHomeScreen(uid: firebaseAuth.toString()),
+          ),
+          (route) => false,
+        );
+      }
 
       // showSnackBar(
       //   context,

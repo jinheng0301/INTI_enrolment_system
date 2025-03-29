@@ -3,6 +3,7 @@ class UserModel {
   final String email; // User's email from FirebaseAuth
   final String username; // Custom username
   final String photoUrl; // Profile picture URL
+  final String role; // User role (e.g., "student", "admin")
   final DateTime createdAt; // Account creation time and date
 
   UserModel({
@@ -10,6 +11,7 @@ class UserModel {
     required this.email,
     required this.username,
     required this.photoUrl,
+    required this.role,
     required this.createdAt,
   });
 
@@ -20,6 +22,7 @@ class UserModel {
       'email': email,
       'username': username,
       'photoUrl': photoUrl,
+      'role': role,
       'createdAt': createdAt.toIso8601String(),
     };
   }
@@ -31,6 +34,7 @@ class UserModel {
       email: map['email'] ?? '',
       username: map['username'] ?? '',
       photoUrl: map['photoUrl'] ?? '',
+      role: map['role'] ?? 'student', // Default role
       createdAt: DateTime.parse(
         map['createdAt'] ?? DateTime.now().toIso8601String(),
       ),

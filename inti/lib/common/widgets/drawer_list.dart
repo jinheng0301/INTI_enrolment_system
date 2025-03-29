@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inti/common/utils/utils.dart';
-import 'package:inti/screens_&_features/auth/controller/auth_controller.dart';
+import 'package:inti/screens_&_features/student/auth/controller/auth_controller.dart';
 
 class DrawerList extends ConsumerStatefulWidget {
   final String uid;

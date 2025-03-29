@@ -8,17 +8,17 @@ import 'package:inti/common/utils/color.dart';
 import 'package:inti/common/utils/utils.dart';
 import 'package:inti/common/widgets/drawer_list.dart';
 
-class HomeScreen extends ConsumerStatefulWidget {
+class StudentHomeScreen extends ConsumerStatefulWidget {
   static const routeName = '/home-screen';
   final String uid;
 
-  HomeScreen({required this.uid});
+  StudentHomeScreen({required this.uid});
 
   @override
-  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<StudentHomeScreen> createState() => _StudentHomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _StudentHomeScreenState extends ConsumerState<StudentHomeScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey =
       GlobalKey<ScaffoldState>(); // ✅ Add a key
   var firebaseAuth = FirebaseAuth.instance.currentUser?.uid;

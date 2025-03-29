@@ -1,9 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:inti/common/widgets/error.dart';
-import 'package:inti/screens_&_features/auth/screens/login_screen.dart';
-import 'package:inti/screens_&_features/auth/screens/sign_up_screen.dart';
-import 'package:inti/screens_&_features/home_screen.dart';
+import 'package:inti/screens_&_features/admin/admin_home_screen.dart';
+import 'package:inti/screens_&_features/student/auth/screens/login_screen.dart';
+import 'package:inti/screens_&_features/student/auth/screens/sign_up_screen.dart';
+import 'package:inti/screens_&_features/student/screens/student_home_screen.dart';
 import 'package:inti/screens_&_features/landing/landing_screen.dart';
 
 Route<dynamic> onGenerateRoute(RouteSettings settings) {
@@ -21,9 +22,13 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
     case SignUpScreen.routeName:
       return MaterialPageRoute(builder: (_) => SignUpScreen());
 
-    // home screen
-    case HomeScreen.routeName:
-      return MaterialPageRoute(builder: (_) => HomeScreen(uid: firebaseAuth!));
+    // student home screen
+    case StudentHomeScreen.routeName:
+      return MaterialPageRoute(builder: (_) => StudentHomeScreen(uid: firebaseAuth!));
+
+    // admin home screen
+    case AdminHomeScreen.routeName:
+      return MaterialPageRoute(builder: (_) => AdminHomeScreen(uid: firebaseAuth!,));
 
     // error screen
     default:

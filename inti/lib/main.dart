@@ -8,8 +8,8 @@ import 'package:inti/common/widgets/error.dart';
 import 'package:inti/common/widgets/loader.dart';
 import 'package:inti/firebase_options.dart';
 import 'package:inti/router.dart';
-import 'package:inti/screens_&_features/auth/screens/login_screen.dart';
-import 'package:inti/screens_&_features/home_screen.dart';
+import 'package:inti/screens_&_features/student/auth/screens/login_screen.dart';
+import 'package:inti/screens_&_features/student/screens/student_home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,7 +34,7 @@ class MyApp extends ConsumerWidget {
       onGenerateRoute: (settings) => onGenerateRoute(settings),
       home: authState.when(
         data: (user) {
-          return user != null ? HomeScreen(uid: firebaseAuth!,) : LoginScreen();
+          return user != null ? StudentHomeScreen(uid: firebaseAuth!) : LoginScreen();
         },
         loading: () => const Scaffold(body: Loader()),
         error:

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inti/models/users.dart';
-import 'package:inti/screens_&_features/auth/repository/auth_repository.dart';
+import 'package:inti/screens_&_features/student/auth/repository/auth_repository.dart';
 
 final authControllerProvider = Provider((ref) {
   final authRepository = ref.watch(authRepositoryProvider);
@@ -30,15 +30,24 @@ class AuthController {
     required String username,
     required WidgetRef ref,
     File? profileImage,
+    required String role,
   }) async {
-    return await authRepository.signUpWithEmail(
+    await authRepository.signUpWithEmail(
       context: context,
       email: email,
       password: password,
       username: username,
+      role: role,
       ref: ref,
       profileImage: profileImage,
     );
+
+    // Navigate based on role
+    if (role == 'student') {
+      Navigator.pushReplacementNamed(context, '/home-screen');
+    } else if (role == 'admin') {
+      Navigator.pushReplacementNamed(context, '/admin-home-screen');
+    }
   }
 
   // sign in with email and password
