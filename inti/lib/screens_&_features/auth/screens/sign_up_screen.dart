@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inti/common/utils/utils.dart';
 import 'package:inti/common/widgets/loader.dart';
 import 'package:inti/common/widgets/text_field_input.dart';
-import 'package:inti/screens_&_features/student/auth/controller/auth_controller.dart';
+import 'package:inti/screens_&_features/auth/controller/auth_controller.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   static const routeName = '/signup-screen';

@@ -2,8 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:inti/common/widgets/error.dart';
 import 'package:inti/screens_&_features/admin/admin_home_screen.dart';
-import 'package:inti/screens_&_features/student/auth/screens/login_screen.dart';
-import 'package:inti/screens_&_features/student/auth/screens/sign_up_screen.dart';
+import 'package:inti/screens_&_features/auth/screens/login_screen.dart';
+import 'package:inti/screens_&_features/auth/screens/sign_up_screen.dart';
 import 'package:inti/screens_&_features/student/screens/student_home_screen.dart';
 import 'package:inti/screens_&_features/landing/landing_screen.dart';
 

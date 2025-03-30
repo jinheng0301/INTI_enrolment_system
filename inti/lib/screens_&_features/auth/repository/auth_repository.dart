@@ -8,7 +8,7 @@ import 'package:inti/common/repositories/common_firebase_storage_repository.dart
 import 'package:inti/common/utils/utils.dart';
 import 'package:inti/models/users.dart';
 import 'package:inti/screens_&_features/admin/admin_home_screen.dart';
-import 'package:inti/screens_&_features/student/auth/screens/login_screen.dart';
+import 'package:inti/screens_&_features/auth/screens/login_screen.dart';
 import 'package:inti/screens_&_features/student/screens/student_home_screen.dart';
 
 final authRepositoryProvider = Provider(
