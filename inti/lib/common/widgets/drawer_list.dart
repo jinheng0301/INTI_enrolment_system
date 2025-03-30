@@ -15,6 +15,7 @@ class DrawerList extends ConsumerStatefulWidget {
 class _DrawerListState extends ConsumerState<DrawerList> {
   var userData = {};
   bool isLoading = false;
+  String userRole = 'student';
 
   @override
   void initState() {
@@ -35,7 +36,10 @@ class _DrawerListState extends ConsumerState<DrawerList> {
               .doc(widget.uid)
               .get();
 
-      userData = userSnap.data()!;
+      if (userSnap.exists) {
+        userData = userSnap.data()!;
+        userRole = userData['role'] ?? 'student';
+      }
 
       setState(() {});
     } catch (e) {
@@ -127,29 +131,67 @@ class _DrawerListState extends ConsumerState<DrawerList> {
               ),
             ),
           ),
-          ListTile(
-            onTap: () {},
-            title: Text('Enrolment', textAlign: TextAlign.center),
-          ),
-          ListTile(
-            onTap: () {},
-            title: Text('Add / Drop Courses', textAlign: TextAlign.center),
-          ),
-          ListTile(
-            onTap: () {},
-            title: Text('Statement of Account', textAlign: TextAlign.center),
-          ),
-          ListTile(
-            onTap: () {},
-            title: Text('Payment', textAlign: TextAlign.center),
-          ),
-          ListTile(
-            onTap: () {},
-            title: Text('Account Management', textAlign: TextAlign.center),
-          ),
+
+          if (userRole == 'student') ...[
+            ListTile(
+              onTap: () {
+                Navigator.pushNamed(context, '/course-enrolment-screen');
+              },
+              leading: Icon(Icons.school),
+              title: Text('Enrolment'),
+            ),
+            ListTile(
+              onTap: () {},
+              leading: Icon(Icons.playlist_add),
+              title: Text('Add / Drop Courses'),
+            ),
+            ListTile(
+              onTap: () {},
+              leading: Icon(Icons.receipt),
+              title: Text('Statement of Account'),
+            ),
+            ListTile(
+              onTap: () {},
+              leading: Icon(Icons.payment),
+              title: Text('Payment'),
+            ),
+            ListTile(
+              onTap: () {},
+              leading: Icon(Icons.settings),
+              title: Text('Account Management'),
+            ),
+          ] else if (userRole == 'admin') ...[
+            ListTile(
+              onTap: () {},
+              leading: Icon(Icons.library_books),
+              title: Text('Manage Courses'),
+            ),
+            ListTile(
+              onTap: () {},
+              leading: Icon(Icons.person_add),
+              title: Text('Student Enrolment Management'),
+            ),
+            ListTile(
+              onTap: () {},
+              leading: Icon(Icons.payment),
+              title: Text('Payment Verification'),
+            ),
+            ListTile(
+              onTap: () {},
+              leading: Icon(Icons.analytics),
+              title: Text('Reports & Analytics'),
+            ),
+            ListTile(
+              onTap: () {},
+              leading: Icon(Icons.admin_panel_settings),
+              title: Text('User Management'),
+            ),
+          ],
+
           ListTile(
             onTap: _showDialog,
-            title: Text('Sign Out!', textAlign: TextAlign.center),
+            leading: Icon(Icons.logout),
+            title: Text('Sign Out!'),
           ),
         ],
       ),

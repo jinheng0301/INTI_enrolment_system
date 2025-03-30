@@ -4,28 +4,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inti/common/utils/color.dart';
 import 'package:inti/common/widgets/drawer_list.dart';
 
-class AdminHomeScreen extends ConsumerStatefulWidget {
-  static const routeName = '/admin-home-screen';
+class CourseEnrolmentScreen extends ConsumerStatefulWidget {
+  static const routeName = '/course-enrolment-screen';
   final String uid;
 
-  const AdminHomeScreen({super.key, required this.uid});
+  CourseEnrolmentScreen({required this.uid});
 
   @override
-  ConsumerState<AdminHomeScreen> createState() => _AdminHomeScreenState();
+  ConsumerState<CourseEnrolmentScreen> createState() =>
+      _CourseEnrolmentScreenState();
 }
 
-class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
+class _CourseEnrolmentScreenState extends ConsumerState<CourseEnrolmentScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   var firebaseAuth = FirebaseAuth.instance.currentUser?.uid;
 
   @override
   Widget build(BuildContext context) {
-    // final height = MediaQuery.of(context).size.height;
-
     return Scaffold(
-      key: _scaffoldKey,
+      key: _scaffoldKey, // ✅ Assign the scaffold key
 
-      drawer: DrawerList(uid: firebaseAuth ?? ''),
+      drawer: DrawerList(uid: firebaseAuth ?? ''), // ✅ Add the drawer
 
       appBar: AppBar(
         backgroundColor: tabColor,
@@ -35,9 +34,11 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
           icon: Icon(Icons.menu, color: Colors.white),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
-        title: Image.asset(
-          'images/inti_logo.png',
-          height: 40,
+        title: GestureDetector(
+          onTap: () {
+            Navigator.pushNamed(context, '/student-home-screen');
+          },
+          child: Image.asset('images/inti_logo.png', height: 40),
         ), // ✅ Adjusted logo
         actions: [
           IconButton(
@@ -50,7 +51,13 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
           ),
         ],
       ),
-      body: Center(child: Text('admin home screen')),
+
+      body: Center(
+        child: Text(
+          'Course Enrolment Screen',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+      ),
     );
   }
 }

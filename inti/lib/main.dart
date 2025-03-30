@@ -9,7 +9,7 @@ import 'package:inti/common/widgets/error.dart';
 import 'package:inti/common/widgets/loader.dart';
 import 'package:inti/firebase_options.dart';
 import 'package:inti/router.dart';
-import 'package:inti/screens_&_features/admin/admin_home_screen.dart';
+import 'package:inti/screens_&_features/admin/screens/admin_home_screen.dart';
 import 'package:inti/screens_&_features/auth/screens/login_screen.dart';
 import 'package:inti/screens_&_features/student/screens/student_home_screen.dart';
 

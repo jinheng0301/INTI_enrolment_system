@@ -9,7 +9,7 @@ import 'package:inti/common/utils/utils.dart';
 import 'package:inti/common/widgets/drawer_list.dart';
 
 class StudentHomeScreen extends ConsumerStatefulWidget {
-  static const routeName = '/home-screen';
+  static const routeName = '/student-home-screen';
   final String uid;
 
   StudentHomeScreen({required this.uid});
@@ -27,6 +27,12 @@ class _StudentHomeScreenState extends ConsumerState<StudentHomeScreen> {
   late String programme;
   late String semester;
   DateTime currentTime = DateTime.now();
+  String courseCode = 'NET4207';
+  String courseName = 'Cross-Platform Mobile Application Development';
+  int creditHours = 4;
+  String announcementTitle = 'New course registration opens on Monday!';
+  String announcementDescription =
+      'Please register for your courses before the deadline.';
 
   @override
   void initState() {
@@ -184,7 +190,7 @@ class _StudentHomeScreenState extends ConsumerState<StudentHomeScreen> {
               padding: const EdgeInsets.all(25),
               child: Container(
                 width: double.infinity,
-                height: height * .25,
+                height: height * .35,
                 decoration: BoxDecoration(
                   color: Colors.blueAccent,
                   gradient: LinearGradient(
@@ -262,7 +268,245 @@ class _StudentHomeScreenState extends ConsumerState<StudentHomeScreen> {
             SizedBox(height: 40),
 
             // ENROLLED COURSES
-            Container(color: Colors.blueAccent, height: height * .5),
+            Padding(
+              padding: const EdgeInsets.all(25),
+              child: Container(
+                height: height * .7,
+                decoration: BoxDecoration(
+                  color: Colors.greenAccent,
+                  boxShadow: [
+                    BoxShadow(
+                      blurRadius: 2,
+                      color: Colors.black.withOpacity(0.5),
+                      offset: Offset(5, 5),
+                    ),
+                  ],
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Colors.black.withOpacity(0.5),
+                    width: 2,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Enrolled Courses',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              // Navigate to manage courses screen
+                            },
+                            child: Text(
+                              'Manage',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.normal,
+                                color: secondaryColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: 20),
+
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: 5,
+                        itemBuilder: (context, index) {
+                          return GestureDetector(
+                            onTap: () {
+                              // Navigate to course details screen
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white, // Background color
+                                  borderRadius: BorderRadius.circular(
+                                    10,
+                                  ), // Rounded corners
+                                  border: Border.all(
+                                    color: Colors.grey.shade300, // Border color
+                                    width: 1.5, // Border width
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(
+                                        0.3,
+                                      ), // Shadow color
+                                      blurRadius: 5, // Blur radius
+                                      offset: Offset(2, 2), // Shadow offset
+                                    ),
+                                  ],
+                                ),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.all(
+                                    16,
+                                  ), // Padding inside the ListTile
+                                  leading: CircleAvatar(
+                                    backgroundColor: Colors.blueAccent,
+                                    child: Text(
+                                      courseCode[0], // First letter of the course code
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  title: Text(
+                                    courseCode,
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  subtitle: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      SizedBox(height: 8),
+                                      Text(
+                                        courseName,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.normal,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        '$creditHours Credit Hours',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.normal,
+                                          color: Colors.black45,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            SizedBox(height: 40),
+
+            // ANNOUNCEMENTS
+            Padding(
+              padding: const EdgeInsets.all(25),
+              child: Container(
+                height: height * .4,
+                decoration: BoxDecoration(
+                  color: Colors.orangeAccent,
+                  boxShadow: [
+                    BoxShadow(
+                      blurRadius: 2,
+                      color: Colors.black.withOpacity(0.5),
+                      offset: Offset(5, 5),
+                    ),
+                  ],
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Colors.black.withOpacity(0.5),
+                    width: 2,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Announcements',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Icon(Icons.announcement_rounded, color: Colors.white),
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: 20),
+
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: 4,
+                        itemBuilder: (context, index) {
+                          return GestureDetector(
+                            onTap: () {
+                              // Navigate to announcement details screen
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white, // Background color
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: Colors.grey.shade300, // Border color
+                                    width: 1.5, // Border width
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(
+                                        0.3,
+                                      ), // Shadow color
+                                      blurRadius: 5, // Blur radius
+                                      offset: Offset(2, 2), // Shadow offset
+                                    ),
+                                  ],
+                                ),
+                                child: ListTile(
+                                  title: Text(
+                                    announcementTitle,
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    announcementDescription,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.normal,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
