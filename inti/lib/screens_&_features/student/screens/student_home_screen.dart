@@ -129,7 +129,7 @@ class _StudentHomeScreenState extends ConsumerState<StudentHomeScreen> {
           children: [
             // BANNER AND TITLE
             Container(
-              color: Colors.amberAccent,
+              color: Colors.transparent,
               width: double.infinity,
               height: height * .5,
               child: Stack(
@@ -215,7 +215,7 @@ class _StudentHomeScreenState extends ConsumerState<StudentHomeScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
                       Row(

@@ -70,6 +70,8 @@ flutter:
   assets:
     - images/inti_logo.png
     - images/inti_background.jpg
+    - images/amg_s63.jpg
+    - images/civic_typer.jpg
    
 
   # An image asset can refer to one or more resolution-specific "variants", see

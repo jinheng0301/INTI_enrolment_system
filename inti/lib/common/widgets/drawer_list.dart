@@ -162,7 +162,9 @@ class _DrawerListState extends ConsumerState<DrawerList> {
             ),
           ] else if (userRole == 'admin') ...[
             ListTile(
-              onTap: () {},
+              onTap: () {
+                Navigator.pushNamed(context, '/manage-course-screen');
+              },
               leading: Icon(Icons.library_books),
               title: Text('Manage Courses'),
             ),

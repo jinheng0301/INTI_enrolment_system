@@ -1,8 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inti/common/utils/color.dart';
 import 'package:inti/common/widgets/drawer_list.dart';
+import 'package:inti/common/widgets/error.dart';
+import 'package:inti/common/widgets/loader.dart';
 import 'package:inti/screens_&_features/student/widgets/course_container.dart';
 
 class CourseEnrolmentScreen extends ConsumerStatefulWidget {
@@ -20,6 +23,13 @@ class _CourseEnrolmentScreenState extends ConsumerState<CourseEnrolmentScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   var firebaseAuth = FirebaseAuth.instance.currentUser?.uid;
   String monthlySemester = 'JAN2025';
+
+  Stream<List<Map<String, dynamic>>> fetchCourses() {
+    return FirebaseFirestore.instance
+        .collection('admin_add_courses')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -152,42 +162,64 @@ class _CourseEnrolmentScreenState extends ConsumerState<CourseEnrolmentScreen> {
                     SizedBox(height: 10),
 
                     Expanded(
-                      child: ListView.builder(
-                        itemCount: 4,
-                        itemBuilder: (context, index) {
-                          return Container(
-                            margin: EdgeInsets.only(bottom: 20),
-                            decoration: BoxDecoration(
-                              color: Colors.white, // Background color
-                              borderRadius: BorderRadius.circular(
-                                10,
-                              ), // Rounded corners
-                              border: Border.all(
-                                color: Colors.grey.shade300, // Border color
-                                width: 1.5, // Border width
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(
-                                    0.3,
-                                  ), // Shadow color
-                                  blurRadius: 5, // Blur radius
-                                  offset: Offset(2, 2), // Shadow offset
+                      child: StreamBuilder<List<Map<String, dynamic>>>(
+                        stream: fetchCourses(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return Loader();
+                          } else if (snapshot.hasError) {
+                            return ErrorScreen(
+                              error: snapshot.error.toString(),
+                            );
+                          } else if (!snapshot.hasData ||
+                              snapshot.data!.isEmpty) {
+                            return Center(child: Text('No courses available'));
+                          }
+
+                          final courses = snapshot.data!;
+                          return ListView.builder(
+                            itemCount: courses.length,
+                            itemBuilder: (context, index) {
+                              final course = courses[index];
+
+                              return Container(
+                                margin: EdgeInsets.only(bottom: 20),
+                                decoration: BoxDecoration(
+                                  color: Colors.white, // Background color
+                                  borderRadius: BorderRadius.circular(
+                                    10,
+                                  ), // Rounded corners
+                                  border: Border.all(
+                                    color: Colors.grey.shade300, // Border color
+                                    width: 1.5, // Border width
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(
+                                        0.3,
+                                      ), // Shadow color
+                                      blurRadius: 5, // Blur radius
+                                      offset: Offset(2, 2), // Shadow offset
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                            child: CourseContainer(
-                              courseName: 'Introduction to Programming',
-                              courseCode: 'CS101',
-                              lecturerName: 'Dr. Jane Smith',
-                              schedule: 'Mon, Wed',
-                              venue: 'B2-01',
-                              availableSeats: '25/30',
-                              creditHours: 4,
-                              onEnroll: () {
-                                // Handle enrollment action here
-                              },
-                            ),
+                                child: CourseContainer(
+                                  courseName: course['courseName'] ?? 'N/A',
+                                  courseCode: course['courseCode'] ?? 'N/A',
+                                  lecturerName: course['lecturerName'] ?? 'N/A',
+                                  schedule: course['schedule'] ?? 'N/A',
+                                  venue: course['venue'] ?? 'N/A',
+                                  availableSeats:
+                                      course['availableSeats']?.toString() ??
+                                      'N/A',
+                                  creditHours: course['creditHours'] ?? 0,
+                                  onEnroll: () {
+                                    // Handle enrollment action here
+                                  },
+                                ),
+                              );
+                            },
                           );
                         },
                       ),

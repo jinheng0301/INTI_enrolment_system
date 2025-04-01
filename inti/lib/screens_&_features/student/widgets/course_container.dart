@@ -65,23 +65,18 @@ class CourseContainer extends StatelessWidget {
 
             SizedBox(height: 10),
 
-            InkWell(
-              onTap: () {
-                // Handle enrollment action here
-              },
-              child: Container(
-                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                decoration: BoxDecoration(
-                  color: Colors.blue,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Text(
-                  'Enroll Now!',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+            Container(
+              padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+              decoration: BoxDecoration(
+                color: Colors.blue,
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Text(
+                'Enroll Now!',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
