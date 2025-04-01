@@ -8,15 +8,11 @@ import 'package:inti/screens_&_features/auth/screens/sign_up_screen.dart';
 import 'package:inti/screens_&_features/student/screens/add_drop_screen.dart';
 import 'package:inti/screens_&_features/student/screens/course_enrolment_screen.dart';
 import 'package:inti/screens_&_features/student/screens/student_home_screen.dart';
-import 'package:inti/screens_&_features/landing/landing_screen.dart';
 
 Route<dynamic> onGenerateRoute(RouteSettings settings) {
   var firebaseAuth = FirebaseAuth.instance.currentUser?.uid;
 
   switch (settings.name) {
-    case '/':
-      return MaterialPageRoute(builder: (_) => LandingScreen());
-
     // login screen
     case LoginScreen.routeName:
       return MaterialPageRoute(builder: (_) => LoginScreen());

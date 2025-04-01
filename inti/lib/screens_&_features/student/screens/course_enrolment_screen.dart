@@ -2,7 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:inti/common/provider/course_enrolment_provider.dart';
 import 'package:inti/common/utils/color.dart';
+import 'package:inti/common/utils/utils.dart';
 import 'package:inti/common/widgets/drawer_list.dart';
 import 'package:inti/common/widgets/error.dart';
 import 'package:inti/common/widgets/loader.dart';
@@ -214,8 +216,36 @@ class _CourseEnrolmentScreenState extends ConsumerState<CourseEnrolmentScreen> {
                                       course['availableSeats']?.toString() ??
                                       'N/A',
                                   creditHours: course['creditHours'] ?? 0,
-                                  onEnroll: () {
-                                    // Handle enrollment action here
+                                  onEnroll: () async {
+                                    try {
+                                      await ref
+                                          .read(
+                                            courseEnrolmentControllerProvider,
+                                          )
+                                          .enrollInCourse(
+                                            userId: widget.uid,
+                                            courseId: course['courseCode'],
+                                            courseName:
+                                                course['courseName'] ?? 'N/A',
+                                            lecturerName:
+                                                course['lecturerName'] ?? 'N/A',
+                                            schedule:
+                                                course['schedule'] ?? 'N/A',
+                                            venue: course['venue'] ?? 'N/A',
+                                            creditHours:
+                                                course['creditHours'] ?? 0,
+                                            context: context,
+                                          );
+                                      showSnackBar(
+                                        context,
+                                        'Enrolled successfully in ${course['courseName']}!',
+                                      );
+                                    } catch (e) {
+                                      showSnackBar(
+                                        context,
+                                        'Failed to enroll: $e',
+                                      );
+                                    }
                                   },
                                 ),
                               );

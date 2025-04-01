@@ -8,7 +8,7 @@ class CourseContainer extends StatelessWidget {
   late final String venue;
   late final String availableSeats;
   late final int creditHours;
-  late final Function? onEnroll;
+  late final VoidCallback onEnroll;
 
   CourseContainer({
     required this.courseName,
@@ -18,7 +18,7 @@ class CourseContainer extends StatelessWidget {
     required this.venue,
     required this.availableSeats,
     required this.creditHours,
-    this.onEnroll,
+    required this.onEnroll,
   });
 
   @override
@@ -65,18 +65,21 @@ class CourseContainer extends StatelessWidget {
 
             SizedBox(height: 10),
 
-            Container(
-              padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-              decoration: BoxDecoration(
-                color: Colors.blue,
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: Text(
-                'Enroll Now!',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+            InkWell(
+              onTap: onEnroll,
+              child: Container(
+                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Text(
+                  'Enroll Now!',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
