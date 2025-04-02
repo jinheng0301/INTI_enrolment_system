@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:inti/common/widgets/error.dart';
 import 'package:inti/screens_&_features/admin/screens/admin_home_screen.dart';
 import 'package:inti/screens_&_features/admin/screens/manage_course_screen.dart';
+import 'package:inti/screens_&_features/admin/screens/student_enrolment_management_screen.dart';
 import 'package:inti/screens_&_features/auth/screens/login_screen.dart';
 import 'package:inti/screens_&_features/auth/screens/sign_up_screen.dart';
 import 'package:inti/screens_&_features/student/screens/add_drop_screen.dart';
@@ -49,6 +50,12 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
     case ManageCourseScreen.routeName:
       return MaterialPageRoute(
         builder: (_) => ManageCourseScreen(uid: firebaseAuth!),
+      );
+
+    // student enrolment management screen
+      case StudentEnrolmentManagementScreen.routeName:
+      return MaterialPageRoute(
+        builder: (_) => StudentEnrolmentManagementScreen(uid: firebaseAuth!),
       );
 
     // error screen
