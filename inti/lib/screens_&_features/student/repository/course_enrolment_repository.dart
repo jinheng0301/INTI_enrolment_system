@@ -18,7 +18,7 @@ class CourseEnrolmentRepository {
   CourseEnrolmentRepository({required this.firestore, required this.auth});
 
   Future<void> enrollInCourse({
-    //required String userId,
+    required String userId,
     required String courseId,
     required String courseName,
     required String lecturerName,
@@ -28,12 +28,20 @@ class CourseEnrolmentRepository {
     required DateTime enrollmentDate,
   }) async {
     try {
-      // Generate a unique enrollment ID
-      String enrolmentId = Uuid().v1();
+      DocumentReference userDocRef = firestore.collection('users').doc(userId);
 
-      // Create the enrollment object (assuming you have a toMap() method in your model)
+      // Debug: Check if userId is valid
+      print("🔍 User ID: $userId");
+
+      // Ensure user document exists
+      await userDocRef.set({'exists': true}, SetOptions(merge: true));
+      print("✅ User document ensured.");
+
+      String enrolmentId = Uuid().v1();
+      print("🔍 Generated Enrolment ID: $enrolmentId");
+
       Enrolment enrolment = Enrolment(
-        //studentId: userId,
+        studentId: userId,
         courseId: courseId,
         courseName: courseName,
         lecturerName: lecturerName,
@@ -43,15 +51,14 @@ class CourseEnrolmentRepository {
         enrollmentDate: enrollmentDate,
       );
 
-      // Save the enrollment data under the student's document using the unique enrollment ID
-      await firestore
-          .collection('users')
-          .doc(auth.currentUser!.uid)
+      print("🔍 Enrolment Data: ${enrolment.toMap()}");
+
+      await userDocRef
           .collection('student_course_enrolment')
           .doc(enrolmentId)
           .set(enrolment.toMap());
 
-      print("✅ Enrollment added course: $courseId");
+      print("✅ Enrollment added for course: $courseId");
     } catch (e) {
       print("❌ Error enrolling in course: $e");
       throw Exception('Failed to enroll in course: $e');

@@ -1,7 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class Enrolment {
-  //final String studentId;
+  final String studentId;
   final String courseId;
   final String courseName;
   final String lecturerName;
@@ -11,7 +9,7 @@ class Enrolment {
   final DateTime enrollmentDate;
 
   Enrolment({
-    //required this.studentId,
+    required this.studentId,
     required this.courseId,
     required this.courseName,
     required this.lecturerName,
@@ -23,7 +21,7 @@ class Enrolment {
 
   Map<String, dynamic> toMap() {
     return {
-      //'studentId': studentId,
+      'studentId': studentId,
       'courseId': courseId,
       'courseName': courseName,
       'lecturerName': lecturerName,
@@ -31,7 +29,6 @@ class Enrolment {
       'venue': venue,
       'creditHours': creditHours,
       'enrollmentDate': enrollmentDate.toIso8601String(),
-      'enrolledAt': FieldValue.serverTimestamp(),
     };
   }
 }

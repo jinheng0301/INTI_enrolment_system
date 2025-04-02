@@ -25,12 +25,46 @@ class _CourseEnrolmentScreenState extends ConsumerState<CourseEnrolmentScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   var firebaseAuth = FirebaseAuth.instance.currentUser?.uid;
   String monthlySemester = 'JAN2025';
+  List<Map<String, dynamic>> availableCourses = [];
+  List<String> enrolledCourseIds = [];
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    fetchEnrolledCourses();
+  }
+
+  Future<void> fetchEnrolledCourses() async {
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(firebaseAuth)
+              .collection('student_course_enrolment')
+              .get();
+
+      setState(() {
+        enrolledCourseIds =
+            snapshot.docs.map((doc) => doc['courseId'] as String).toList();
+      });
+    } catch (e) {
+      print("❌ Error fetching enrolled courses: $e");
+    }
+  }
 
   Stream<List<Map<String, dynamic>>> fetchCourses() {
     return FirebaseFirestore.instance
         .collection('admin_add_courses')
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
+        .map((snapshot) {
+          final courses = snapshot.docs.map((doc) => doc.data()).toList();
+          return courses
+              .where(
+                (course) => !enrolledCourseIds.contains(course['courseCode']),
+              )
+              .toList(); // Filter out already enrolled courses
+        });
   }
 
   @override
@@ -121,7 +155,7 @@ class _CourseEnrolmentScreenState extends ConsumerState<CourseEnrolmentScreen> {
                     SizedBox(height: 10),
 
                     Text(
-                      'Enrolment period: 1st - 15th of the month',
+                      'Enrolment period: 1st - 8th of the month',
                       style: TextStyle(fontSize: 14, color: Colors.grey),
                     ),
                   ],
@@ -180,6 +214,7 @@ class _CourseEnrolmentScreenState extends ConsumerState<CourseEnrolmentScreen> {
                           }
 
                           final courses = snapshot.data!;
+
                           return ListView.builder(
                             itemCount: courses.length,
                             itemBuilder: (context, index) {
@@ -217,28 +252,42 @@ class _CourseEnrolmentScreenState extends ConsumerState<CourseEnrolmentScreen> {
                                       'N/A',
                                   creditHours: course['creditHours'] ?? 0,
                                   onEnroll: () async {
-                                    try {
-                                      await ref
-                                          .read(
-                                            courseEnrolmentControllerProvider,
-                                          )
-                                          .enrollInCourse(
-                                            userId: widget.uid,
-                                            courseId: course['courseCode'],
-                                            courseName:
-                                                course['courseName'] ?? 'N/A',
-                                            lecturerName:
-                                                course['lecturerName'] ?? 'N/A',
-                                            schedule:
-                                                course['schedule'] ?? 'N/A',
-                                            venue: course['venue'] ?? 'N/A',
-                                            creditHours:
-                                                course['creditHours'] ?? 0,
-                                            context: context,
-                                          );
+                                    if (enrolledCourseIds.length >= 5) {
                                       showSnackBar(
                                         context,
-                                        'Enrolled successfully in ${course['courseName']}!',
+                                        '❌ You can only enroll in 5 courses.',
+                                      );
+                                      return;
+                                    }
+
+                                    try {
+                                      final courseController = ref.read(
+                                        courseEnrolmentControllerProvider,
+                                      );
+
+                                      await courseController.enrollInCourse(
+                                        userId: widget.uid,
+                                        courseId: course['courseCode'],
+                                        courseName:
+                                            course['courseName'] ?? 'N/A',
+                                        lecturerName:
+                                            course['lecturerName'] ?? 'N/A',
+                                        schedule: course['schedule'] ?? 'N/A',
+                                        venue: course['venue'] ?? 'N/A',
+                                        creditHours: course['creditHours'] ?? 0,
+                                        context: context,
+                                        enrollmentDate: DateTime.now(),
+                                      );
+
+                                      // ✅ Refresh the list by re-fetching enrolled courses
+                                      await fetchEnrolledCourses();
+
+                                      // ✅ Trigger UI update
+                                      setState(() {});
+
+                                      showSnackBar(
+                                        context,
+                                        'Enrolled successfully in ${course['courseCode']} and ${course['courseName']}!',
                                       );
                                     } catch (e) {
                                       showSnackBar(

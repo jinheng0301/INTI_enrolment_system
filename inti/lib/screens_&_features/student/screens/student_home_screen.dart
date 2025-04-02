@@ -27,18 +27,17 @@ class _StudentHomeScreenState extends ConsumerState<StudentHomeScreen> {
   late String programme;
   late String semester;
   DateTime currentTime = DateTime.now();
-  String courseCode = 'NET4207';
-  String courseName = 'Cross-Platform Mobile Application Development';
-  int creditHours = 4;
   String announcementTitle = 'New course registration opens on Monday!';
   String announcementDescription =
       'Please register for your courses before the deadline.';
+  List<Map<String, dynamic>> enrolledCourses = [];
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     getData();
+    getEnrolledCourses(); // Fetch enrolled courses
   }
 
   void getData() async {
@@ -61,6 +60,27 @@ class _StudentHomeScreenState extends ConsumerState<StudentHomeScreen> {
     setState(() {
       isLoading = false;
     });
+  }
+
+  void getEnrolledCourses() async {
+    try {
+      // Fetch the enrolled courses from the user's subcollection
+      var coursesSnap =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(widget.uid)
+              .collection('student_course_enrolment')
+              .get();
+
+      // Debug: Print fetched data
+      print("Fetched courses: ${coursesSnap.docs.map((doc) => doc.data())}");
+
+      setState(() {
+        enrolledCourses = coursesSnap.docs.map((doc) => doc.data()).toList();
+      });
+    } catch (e) {
+      showSnackBar(context, e.toString());
+    }
   }
 
   Column buildPaymentColumn(String title, String value) {
@@ -321,87 +341,101 @@ class _StudentHomeScreenState extends ConsumerState<StudentHomeScreen> {
                     SizedBox(height: 20),
 
                     Expanded(
-                      child: ListView.builder(
-                        itemCount: 5,
-                        itemBuilder: (context, index) {
-                          return GestureDetector(
-                            onTap: () {
-                              // Navigate to course details screen
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(20),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white, // Background color
-                                  borderRadius: BorderRadius.circular(
-                                    10,
-                                  ), // Rounded corners
-                                  border: Border.all(
-                                    color: Colors.grey.shade300, // Border color
-                                    width: 1.5, // Border width
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.grey.withOpacity(
-                                        0.3,
-                                      ), // Shadow color
-                                      blurRadius: 5, // Blur radius
-                                      offset: Offset(2, 2), // Shadow offset
-                                    ),
-                                  ],
-                                ),
-                                child: ListTile(
-                                  contentPadding: const EdgeInsets.all(
-                                    16,
-                                  ), // Padding inside the ListTile
-                                  leading: CircleAvatar(
-                                    backgroundColor: Colors.blueAccent,
-                                    child: Text(
-                                      courseCode[0], // First letter of the course code
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  title: Text(
-                                    courseCode,
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                  subtitle: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      SizedBox(height: 8),
-                                      Text(
-                                        courseName,
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.normal,
-                                          color: Colors.black54,
-                                        ),
-                                      ),
-                                      SizedBox(height: 4),
-                                      Text(
-                                        '$creditHours Credit Hours',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.normal,
-                                          color: Colors.black45,
-                                        ),
-                                      ),
-                                    ],
+                      child:
+                          enrolledCourses.isEmpty
+                              ? Center(
+                                child: Text(
+                                  'No enrolled courses found.',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black54,
                                   ),
                                 ),
+                              )
+                              : ListView.builder(
+                                itemCount: enrolledCourses.length,
+                                itemBuilder: (context, index) {
+                                  final course = enrolledCourses[index];
+
+                                  return GestureDetector(
+                                    onTap: () {
+                                      // Navigate to course details screen
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(20),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.grey.shade300,
+                                            width: 1.5,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.grey.withOpacity(
+                                                0.3,
+                                              ),
+                                              blurRadius: 5,
+                                              offset: Offset(2, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: ListTile(
+                                          contentPadding: const EdgeInsets.all(
+                                            16,
+                                          ),
+                                          leading: CircleAvatar(
+                                            backgroundColor: Colors.blueAccent,
+                                            child: Text(
+                                              course['courseId']?[0] ??
+                                                  '?', // Safely access the first letter
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          title: Text(
+                                            course['courseId'].toString(),
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black87,
+                                            ),
+                                          ),
+                                          subtitle: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              SizedBox(height: 8),
+                                              Text(
+                                                course['courseName'].toString(),
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.normal,
+                                                  color: Colors.black54,
+                                                ),
+                                              ),
+                                              SizedBox(height: 4),
+                                              Text(
+                                                '${course['creditHours']} Credit Hours',
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.normal,
+                                                  color: Colors.black45,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
-                            ),
-                          );
-                        },
-                      ),
                     ),
                   ],
                 ),
