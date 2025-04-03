@@ -223,21 +223,17 @@ class _CourseEnrolmentScreenState extends ConsumerState<CourseEnrolmentScreen> {
                               return Container(
                                 margin: EdgeInsets.only(bottom: 20),
                                 decoration: BoxDecoration(
-                                  color: Colors.white, // Background color
-                                  borderRadius: BorderRadius.circular(
-                                    10,
-                                  ), // Rounded corners
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                    color: Colors.grey.shade300, // Border color
-                                    width: 1.5, // Border width
+                                    color: Colors.grey.shade300,
+                                    width: 1.5,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.grey.withOpacity(
-                                        0.3,
-                                      ), // Shadow color
-                                      blurRadius: 5, // Blur radius
-                                      offset: Offset(2, 2), // Shadow offset
+                                      color: Colors.grey.withOpacity(0.3),
+                                      blurRadius: 5,
+                                      offset: Offset(2, 2),
                                     ),
                                   ],
                                 ),

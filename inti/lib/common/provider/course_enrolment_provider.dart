@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inti/common/utils/utils.dart';
@@ -43,6 +44,29 @@ class CourseEnrolmentProviderController {
     } catch (e) {
       // Handle errors and show an error message
       showSnackBar(context, 'Failed to enroll in the course: $e');
+    }
+  }
+
+  Future<void> submitDropRequest({
+    required String studentId,
+    required String studentName,
+    required String courseId,
+    required String courseName,
+    required String dropReason,
+    required BuildContext context,
+  }) async {
+    try {
+      await FirebaseFirestore.instance.collection('drop_requests').add({
+        'studentId': studentId,
+        'studentName': studentName,
+        'courseId': courseId,
+        'courseName': courseName,
+        'dropReason': dropReason,
+        'status': 'Pending',
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      showSnackBar(context, 'Error: $e');
     }
   }
 }

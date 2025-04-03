@@ -45,4 +45,26 @@ class CourseEnrolmentController {
       showSnackBar(context, 'Failed to enroll: $e');
     }
   }
+
+  Future<void> submitDropRequest({
+    required String studentId,
+    required String studentName,
+    required String courseId,
+    required String courseName,
+    required String dropReason,
+    required BuildContext context,
+  }) async {
+    try {
+      await repository.submitDropRequest(
+        studentId: studentId,
+        studentName: studentName,
+        courseId: courseId,
+        courseName: courseName,
+        dropReason: dropReason,
+      );
+      showSnackBar(context, 'Drop request submitted for $courseName!');
+    } catch (e) {
+      showSnackBar(context, 'Failed to submit drop request: $e');
+    }
+  }
 }

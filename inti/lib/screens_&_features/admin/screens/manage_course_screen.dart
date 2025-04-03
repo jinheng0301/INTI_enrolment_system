@@ -408,77 +408,80 @@ class _ManageCourseScreenState extends ConsumerState<ManageCourseScreen> {
                 }
 
                 // Use a DataTable to replicate your sample UI
-                return Container(
-                  margin: EdgeInsets.symmetric(horizontal: 20),
-                  width: double.infinity,
-                  padding: EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey.shade300, width: 1),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        blurRadius: 5,
-                        offset: Offset(2, 2),
-                      ),
-                    ],
-                  ),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.vertical,
-                    child: DataTable(
-                      columns: const [
-                        DataColumn(label: Text('Course ID')),
-                        DataColumn(label: Text('Course Name')),
-                        DataColumn(label: Text('Credits')),
-                        DataColumn(label: Text('Actions')),
+                return Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Container(
+                    margin: EdgeInsets.symmetric(horizontal: 20),
+                    width: double.infinity,
+                    padding: EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300, width: 1),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.1),
+                          blurRadius: 5,
+                          offset: Offset(2, 2),
+                        ),
                       ],
-                      rows:
-                          courses.map((course) {
-                            return DataRow(
-                              cells: [
-                                DataCell(Text(course.courseCode)),
-                                DataCell(Text(course.courseName)),
-                                DataCell(Text(course.creditHours.toString())),
-                                DataCell(
-                                  Row(
-                                    children: [
-                                      ElevatedButton(
-                                        onPressed: () {
-                                          // TODO: Implement edit logic
-                                          _showEditDialog({
-                                            'id': course.id,
-                                            'courseName': course.courseName,
-                                            'courseCode': course.courseCode,
-                                            'lecturerName': course.lecturerName,
-                                            'schedule': course.schedule,
-                                            'venue': course.venue,
-                                            'availableSeats':
-                                                course.availableSeats,
-                                            'creditHours': course.creditHours,
-                                          });
-                                        },
-                                        child: Text('Edit'),
-                                      ),
-                                      SizedBox(width: 8),
-                                      ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.red,
+                    ),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.vertical,
+                      child: DataTable(
+                        columns: const [
+                          DataColumn(label: Text('Course ID')),
+                          DataColumn(label: Text('Course Name')),
+                          DataColumn(label: Text('Credits')),
+                          DataColumn(label: Text('Actions')),
+                        ],
+                        rows:
+                            courses.map((course) {
+                              return DataRow(
+                                cells: [
+                                  DataCell(Text(course.courseCode)),
+                                  DataCell(Text(course.courseName)),
+                                  DataCell(Text(course.creditHours.toString())),
+                                  DataCell(
+                                    Row(
+                                      children: [
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            // TODO: Implement edit logic
+                                            _showEditDialog({
+                                              'id': course.id,
+                                              'courseName': course.courseName,
+                                              'courseCode': course.courseCode,
+                                              'lecturerName': course.lecturerName,
+                                              'schedule': course.schedule,
+                                              'venue': course.venue,
+                                              'availableSeats':
+                                                  course.availableSeats,
+                                              'creditHours': course.creditHours,
+                                            });
+                                          },
+                                          child: Text('Edit'),
                                         ),
-                                        onPressed: () {
-                                          // TODO: Implement delete logic
-                                          _showDeleteConfirmationDialog(
-                                            course.id,
-                                          );
-                                        },
-                                        child: Text('Delete'),
-                                      ),
-                                    ],
+                                        SizedBox(width: 8),
+                                        ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.red,
+                                          ),
+                                          onPressed: () {
+                                            // TODO: Implement delete logic
+                                            _showDeleteConfirmationDialog(
+                                              course.id,
+                                            );
+                                          },
+                                          child: Text('Delete'),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ],
-                            );
-                          }).toList(),
+                                ],
+                              );
+                            }).toList(),
+                      ),
                     ),
                   ),
                 );

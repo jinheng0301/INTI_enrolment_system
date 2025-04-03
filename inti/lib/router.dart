@@ -37,7 +37,7 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
 
     // add drop screen
     case AddDropScreen.routeName:
-      return MaterialPageRoute(builder: (_) => AddDropScreen());
+      return MaterialPageRoute(builder: (_) => AddDropScreen(uid: firebaseAuth!,));
 
     // FOR ADMIN
     // admin home screen

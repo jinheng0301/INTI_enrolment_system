@@ -2,13 +2,25 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:inti/common/provider/enrollments_stream_provider.dart';
 import 'package:inti/common/utils/color.dart';
 import 'package:inti/common/widgets/drawer_list.dart';
 import 'package:inti/common/widgets/error.dart';
 import 'package:inti/common/widgets/loader.dart';
-import 'package:inti/models/enrollment_for_approve_and_reject.dart';
+import 'package:inti/models/drop_request.dart';
 import 'package:inti/screens_&_features/admin/controllers/student_enrolment_management_controller.dart';
+
+final dropRequestsProvider = StreamProvider.autoDispose<List<DropRequest>>((
+  ref,
+) {
+  return FirebaseFirestore.instance
+      .collection('drop_requests')
+      .where('status', isEqualTo: 'pending')
+      .snapshots()
+      .map(
+        (snapshot) =>
+            snapshot.docs.map((doc) => DropRequest.fromFirestore(doc)).toList(),
+      );
+});
 
 class StudentEnrolmentManagementScreen extends ConsumerStatefulWidget {
   static const routeName = '/student-enrolment-management-screen';
@@ -42,66 +54,70 @@ class _StudentEnrolmentManagementState
     setState(() => userData = userSnap.data() ?? {});
   }
 
-  Widget _buildEnrollmentTable(
-    List<EnrollmentForApproveAndReject> enrollments,
-  ) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.vertical,
-      child: DataTable(
-        columns: const [
-          DataColumn(label: Text('Student ID')),
-          DataColumn(label: Text('Name')),
-          DataColumn(label: Text('Course')),
-          DataColumn(label: Text('Status')),
-          DataColumn(label: Text('Actions')),
-        ],
-        rows:
-            enrollments
-                .map(
-                  (enrollment) => DataRow(
-                    cells: [
-                      DataCell(Text(enrollment.studentId)),
-                      DataCell(Text(enrollment.studentName)),
-                      DataCell(Text(enrollment.courseName)),
-                      DataCell(Text(enrollment.status)),
-                      DataCell(
-                        Row(
-                          children: [
-                            ElevatedButton(
-                              onPressed:
-                                  () => ref
-                                      .read(studentEnrolmentManagementProvider)
-                                      .approveEnrollment(enrollment.id),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                              ),
-                              child: const Text('Approve'),
-                            ),
-                            const SizedBox(width: 8),
-                            ElevatedButton(
-                              onPressed:
-                                  () => ref
-                                      .read(studentEnrolmentManagementProvider)
-                                      .rejectEnrollment(enrollment.id),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                              ),
-                              child: const Text('Reject'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-                .toList(),
-      ),
-    );
-  }
+  // Widget _buildEnrollmentTable(
+  //   List<EnrollmentForApproveAndReject> enrollments,
+  // ) {
+  //   return SingleChildScrollView(
+  //     scrollDirection: Axis.vertical,
+  //     child: DataTable(
+  //       columns: const [
+  //         DataColumn(label: Text('Student ID')),
+  //         DataColumn(label: Text('Name')),
+  //         DataColumn(label: Text('Course')),
+  //         DataColumn(label: Text('Status')),
+  //         DataColumn(label: Text('Drop Reason')),
+  //         DataColumn(label: Text('Actions')),
+  //       ],
+  //       rows:
+  //           enrollments
+  //               .map(
+  //                 (enrollment) => DataRow(
+  //                   cells: [
+  //                     DataCell(Text(enrollment.studentId)),
+  //                     DataCell(Text(enrollment.studentName)),
+  //                     DataCell(Text(enrollment.courseName)),
+  //                     DataCell(Text(enrollment.status)),
+  //                     DataCell(
+  //                       Text(enrollment.dropReason ?? 'N/A'),
+  //                     ), // Display drop reason
+  //                     DataCell(
+  //                       Row(
+  //                         children: [
+  //                           ElevatedButton(
+  //                             onPressed:
+  //                                 () => ref
+  //                                     .read(studentEnrolmentManagementProvider)
+  //                                     .approveDropRequest(enrollment.id),
+  //                             style: ElevatedButton.styleFrom(
+  //                               backgroundColor: Colors.green,
+  //                             ),
+  //                             child: const Text('Approve'),
+  //                           ),
+  //                           const SizedBox(width: 8),
+  //                           ElevatedButton(
+  //                             onPressed:
+  //                                 () => ref
+  //                                     .read(studentEnrolmentManagementProvider)
+  //                                     .rejectDropRequest(enrollment.id),
+  //                             style: ElevatedButton.styleFrom(
+  //                               backgroundColor: Colors.red,
+  //                             ),
+  //                             child: const Text('Reject'),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               )
+  //               .toList(),
+  //     ),
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
-    final enrollmentsAsync = ref.watch(enrollmentsStreamProvider);
+    final dropRequests = ref.watch(dropRequestsProvider);
 
     return Scaffold(
       key: _scaffoldKey,
@@ -164,10 +180,52 @@ class _StudentEnrolmentManagementState
             const SizedBox(height: 20),
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: enrollmentsAsync.when(
+              child: dropRequests.when(
                 loading: () => const Loader(),
                 error: (error, stack) => ErrorScreen(error: error.toString()),
-                data: (enrollments) => _buildEnrollmentTable(enrollments),
+                data:
+                    (requests) => ListView.builder(
+                      itemCount: requests.length,
+                      itemBuilder: (context, index) {
+                        final request = requests[index];
+
+                        return Card(
+                          child: ListTile(
+                            title: Text(request.courseName),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Student: ${request.studentName}'),
+                                Text('Reason: ${request.dropReason}'),
+                              ],
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: Icon(Icons.check, color: Colors.green),
+                                  onPressed:
+                                      () => ref
+                                          .read(
+                                            studentEnrolmentManagementProvider,
+                                          )
+                                          .approveDropRequest(request.id),
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.close, color: Colors.red),
+                                  onPressed:
+                                      () => ref
+                                          .read(
+                                            studentEnrolmentManagementProvider,
+                                          )
+                                          .rejectDropRequest(request.id),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
               ),
             ),
           ],
@@ -176,164 +234,3 @@ class _StudentEnrolmentManagementState
     );
   }
 }
-
-// import 'package:flutter/material.dart';
-
-// class StudentEnrolmentManagementScreen extends StatelessWidget {
-//   const StudentEnrolmentManagementScreen({super.key});
-//   static const routeName = '/student-enrolment-management-screen';
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('Enrolment Management'),
-//         backgroundColor: Colors.blue,
-//       ),
-//       body: SingleChildScrollView(
-//         child: Padding(
-//           padding: const EdgeInsets.all(16.0),
-//           child: Column(
-//             children: [
-//               // Admin welcome message
-//               Container(
-//                 padding: const EdgeInsets.all(20),
-//                 margin: const EdgeInsets.only(bottom: 20),
-//                 decoration: BoxDecoration(
-//                   color: Colors.white,
-//                   borderRadius: BorderRadius.circular(10),
-//                   boxShadow: [
-//                     BoxShadow(
-//                       color: Colors.grey.withOpacity(0.3),
-//                       blurRadius: 5,
-//                       offset: const Offset(2, 2),
-//                     ),
-//                   ],
-//                 ),
-//                 child: const Text(
-//                   'Admin, you can manage all the student pending courses.',
-//                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-//                   textAlign: TextAlign.center,
-//                 ),
-//               ),
-
-//               // Hardcoded DataTable
-//               DataTable(
-//                 columnSpacing: 20,
-//                 columns: const [
-//                   DataColumn(
-//                     label: Text(
-//                       'Student ID',
-//                       style: TextStyle(fontWeight: FontWeight.bold),
-//                     ),
-//                   ),
-//                   DataColumn(
-//                     label: Text(
-//                       'Name',
-//                       style: TextStyle(fontWeight: FontWeight.bold),
-//                     ),
-//                   ),
-//                   DataColumn(
-//                     label: Text(
-//                       'Course',
-//                       style: TextStyle(fontWeight: FontWeight.bold),
-//                     ),
-//                   ),
-//                   DataColumn(
-//                     label: Text(
-//                       'Status',
-//                       style: TextStyle(fontWeight: FontWeight.bold),
-//                     ),
-//                   ),
-//                   DataColumn(
-//                     label: Text(
-//                       'Actions',
-//                       style: TextStyle(fontWeight: FontWeight.bold),
-//                     ),
-//                   ),
-//                 ],
-//                 rows: [
-//                   DataRow(
-//                     cells: [
-//                       const DataCell(Text('INT112345')),
-//                       const DataCell(Text('Jane Doe')),
-//                       const DataCell(Text('C5101')),
-//                       const DataCell(
-//                         Text('Pending', style: TextStyle(color: Colors.orange)),
-//                       ),
-//                       DataCell(
-//                         Row(
-//                           children: [
-//                             ElevatedButton(
-//                               onPressed: () {},
-//                               style: ElevatedButton.styleFrom(
-//                                 backgroundColor: Colors.green,
-//                                 padding: const EdgeInsets.symmetric(
-//                                   horizontal: 12,
-//                                 ),
-//                               ),
-//                               child: const Text('Approve'),
-//                             ),
-//                             const SizedBox(width: 8),
-//                             ElevatedButton(
-//                               onPressed: () {},
-//                               style: ElevatedButton.styleFrom(
-//                                 backgroundColor: Colors.red,
-//                                 padding: const EdgeInsets.symmetric(
-//                                   horizontal: 12,
-//                                 ),
-//                               ),
-//                               child: const Text('Reject'),
-//                             ),
-//                           ],
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                   // Add more hardcoded rows as needed
-//                   DataRow(
-//                     cells: [
-//                       const DataCell(Text('INT112346')),
-//                       const DataCell(Text('John Smith')),
-//                       const DataCell(Text('C5102')),
-//                       const DataCell(
-//                         Text('Pending', style: TextStyle(color: Colors.orange)),
-//                       ),
-//                       DataCell(
-//                         Row(
-//                           children: [
-//                             ElevatedButton(
-//                               onPressed: () {},
-//                               style: ElevatedButton.styleFrom(
-//                                 backgroundColor: Colors.green,
-//                                 padding: const EdgeInsets.symmetric(
-//                                   horizontal: 12,
-//                                 ),
-//                               ),
-//                               child: const Text('Approve'),
-//                             ),
-//                             const SizedBox(width: 8),
-//                             ElevatedButton(
-//                               onPressed: () {},
-//                               style: ElevatedButton.styleFrom(
-//                                 backgroundColor: Colors.red,
-//                                 padding: const EdgeInsets.symmetric(
-//                                   horizontal: 12,
-//                                 ),
-//                               ),
-//                               child: const Text('Reject'),
-//                             ),
-//                           ],
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ],
-//               ),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }

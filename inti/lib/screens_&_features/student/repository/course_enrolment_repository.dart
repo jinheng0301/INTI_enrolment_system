@@ -64,4 +64,48 @@ class CourseEnrolmentRepository {
       throw Exception('Failed to enroll in course: $e');
     }
   }
+
+  Future<void> submitDropRequest({
+    required String studentId,
+    required String studentName,
+    required String courseId,
+    required String courseName,
+    required String dropReason,
+  }) async {
+    try {
+      // Check if a pending drop request already exists for this student & course.
+      QuerySnapshot existingRequests =
+          await firestore
+              .collection('drop_requests')
+              .where('studentId', isEqualTo: studentId)
+              .where('courseId', isEqualTo: courseId)
+              .where('status', isEqualTo: 'pending')
+              .get();
+
+      if (existingRequests.docs.isNotEmpty) {
+        // A pending drop request already exists.
+        throw Exception('A drop request for this course is already pending.');
+      }
+
+      // Generate a unique ID for the drop request.
+      String dropRequestId = Uuid().v1();
+
+      // Create drop request document in "drop_requests" collection.
+      await firestore.collection('drop_requests').doc(dropRequestId).set({
+        'studentId': studentId,
+        'studentName': studentName,
+        'courseId': courseId,
+        'courseName': courseName,
+        'dropReason': dropReason,
+        'status': 'pending', // Options: pending/approved/rejected
+        'requestDate': FieldValue.serverTimestamp(),
+        'processedDate': null,
+      });
+
+      print("✅ Drop request submitted for course: $courseId");
+    } catch (e) {
+      print("❌ Error submitting drop request: $e");
+      throw Exception('Failed to submit drop request: $e');
+    }
+  }
 }
