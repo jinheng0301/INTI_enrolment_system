@@ -132,6 +132,63 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
     }
   }
 
+  Future<int> getTotalStudents() async {
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .where('role', isEqualTo: 'student')
+              .get();
+
+      if (snapshot.docs.isEmpty) {
+        print('No students found in the database.');
+      }
+
+      return snapshot.docs.length;
+    } catch (e) {
+      print('Error fetching total students: $e');
+      return 0; // Return 0 in case of an error
+    }
+  }
+
+  Future<int> getTotalAdmins() async {
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .where('role', isEqualTo: 'admin')
+              .get();
+
+      if (snapshot.docs.isEmpty) {
+        print('No admins found in the database.');
+      }
+
+      return snapshot.docs.length;
+    } catch (e) {
+      print('Error fetching total admins: $e');
+      return 0;
+    }
+  }
+
+  Future<int> getTotalDropRequests() async {
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('drop_requests')
+              .where('status', isEqualTo: 'Pending')
+              .get();
+
+      if (snapshot.docs.isEmpty) {
+        print('No drop requests found in the database.');
+      }
+
+      return snapshot.docs.length;
+    } catch (e) {
+      print('Error fetching total drop requests: $e');
+      return 0;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
@@ -175,7 +232,7 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
               child: Image.asset('images/civic_typer.jpg', fit: BoxFit.cover),
             ),
 
-            SizedBox(height: 40),
+            SizedBox(height: 30),
 
             // TITLE WITH CONTAINER
             Padding(
@@ -216,15 +273,13 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
 
             // SUMMARY OF COURSE DETAILS
             Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 courseSummary('Total Course(s)', getTotalCourses()),
-                courseSummary(
-                  'Pending Enrolments',
-                  Future.value(15),
-                ), // Replace with dynamic data if needed
+                courseSummary('Pending drop requests', getTotalDropRequests()),
                 courseSummary('Payments verified', Future.value(30)),
-                courseSummary('New User(s)', Future.value(10)),
+                courseSummary('Total Student(s)', getTotalStudents()),
+                courseSummary('Total Admin(s)', getTotalAdmins()),
               ],
             ),
           ],

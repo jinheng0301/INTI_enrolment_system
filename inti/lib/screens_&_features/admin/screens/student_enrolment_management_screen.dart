@@ -50,10 +50,8 @@ class _StudentEnrolmentManagementState
       if (userSnap.exists) {
         userData = userSnap.data()!;
 
-        // Fetch Admin Status from Firebase Auth Custom Claims
-        var idTokenResult =
-            await FirebaseAuth.instance.currentUser!.getIdTokenResult();
-        isAdmin = idTokenResult.claims?['admin'] == true; // ✅ Check Admin Role
+        // Check admin status using Firestore 'role' field
+        isAdmin = userData['role'] == 'admin';
 
         setState(() {
           isLoading = false;
@@ -74,17 +72,19 @@ class _StudentEnrolmentManagementState
 
     return FirebaseFirestore.instance
         .collection('drop_requests')
-        .where('status', isEqualTo: 'pending')
+        .where('status', isEqualTo: 'Pending')
         .snapshots()
         .map((snapshot) {
           return snapshot.docs.map((doc) {
             final data = doc.data();
             return {
               'id': doc.id,
+              'studentId': data['studentId'],
+              'courseId': data['courseId'],
               'courseName': data['courseName'],
               'studentName': data['studentName'],
               'dropReason': data['dropReason'],
-              'requestDate': data['requestDate'],
+              'requestDate': data['timestamp'],
             };
           }).toList();
         });
@@ -117,139 +117,125 @@ class _StudentEnrolmentManagementState
           ),
         ],
       ),
-      body:
-          isLoading
-              ? const Loader()
-              : isAdmin
-              ? Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(25),
-                    child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: Colors.grey.shade300,
-                          width: 1.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.3),
-                            blurRadius: 5,
-                            offset: Offset(2, 2),
-                          ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.all(20),
-                      child: Text(
-                        userData.isNotEmpty && userData['username'] != null
-                            ? '${userData['username']} admin, you can manage all student pending courses.'
-                            : 'Unknown user',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 30,
-                          color: textColor,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Expanded(
-                    child: StreamBuilder<List<Map<String, dynamic>>>(
-                      stream: fetchDropRequests(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Loader();
-                        } else if (snapshot.hasError) {
-                          return ErrorScreen(error: snapshot.error.toString());
-                        } else if (!snapshot.hasData ||
-                            snapshot.data!.isEmpty) {
-                          return Center(
-                            child: Text('No pending drop requests.'),
-                          );
-                        }
-
-                        final requests = snapshot.data!;
-
-                        return ListView.builder(
-                          itemCount: requests.length,
-                          itemBuilder: (context, index) {
-                            final request = requests[index];
-
-                            return Card(
-                              margin: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              child: ListTile(
-                                title: Text(
-                                  request['courseName'] ?? 'Unknown Course',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Student: ${request['studentName']}'),
-                                    Text('Reason: ${request['dropReason']}'),
-                                    Text(
-                                      'Requested on: ${request['requestDate']?.toDate().toLocal()}',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      icon: Icon(
-                                        Icons.check,
-                                        color: Colors.green,
-                                      ),
-                                      onPressed:
-                                          () => ref
-                                              .read(
-                                                studentEnrolmentManagementProvider,
-                                              )
-                                              .approveDropRequest(
-                                                request['id'],
-                                                context,
-                                              ),
-                                    ),
-                                    IconButton(
-                                      icon: Icon(
-                                        Icons.close,
-                                        color: Colors.red,
-                                      ),
-                                      onPressed:
-                                          () => ref
-                                              .read(
-                                                studentEnrolmentManagementProvider,
-                                              )
-                                              .rejectDropRequest(
-                                                request['id'],
-                                                context,
-                                              ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(25),
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.grey.shade300, width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.3),
+                    blurRadius: 5,
+                    offset: Offset(2, 2),
                   ),
                 ],
+              ),
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                userData.isNotEmpty && userData['username'] != null
+                    ? '${userData['username']} admin, you can manage all student pending courses.'
+                    : 'Unknown user',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 30,
+                  color: textColor,
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          isAdmin
+              ? Expanded(
+                child: StreamBuilder<List<Map<String, dynamic>>>(
+                  stream: fetchDropRequests(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Loader();
+                    } else if (snapshot.hasError) {
+                      return ErrorScreen(error: snapshot.error.toString());
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return Center(child: Text('No pending drop requests.'));
+                    }
+
+                    final requests = snapshot.data!;
+
+                    return ListView.builder(
+                      itemCount: requests.length,
+                      itemBuilder: (context, index) {
+                        final request = requests[index];
+
+                        return Card(
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          child: ListTile(
+                            title: Text(
+                              request['courseName'] ?? 'Unknown Course',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Student: ${request['studentName']}'),
+                                Text('Reason: ${request['dropReason']}'),
+                                Text(
+                                  'Requested on: ${request['requestDate']?.toDate().toLocal()}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: Icon(Icons.check, color: Colors.green),
+                                  onPressed: () {
+                                    ref
+                                        .read(
+                                          studentEnrolmentManagementProvider,
+                                        )
+                                        .approveDropRequest(
+                                          request['id'],
+                                          context,
+                                        );
+                                  },
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.close, color: Colors.red),
+                                  onPressed: () {
+                                    ref
+                                        .read(
+                                          studentEnrolmentManagementProvider,
+                                        )
+                                        .rejectDropRequest(
+                                          request['id'],
+                                          context,
+                                        );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
               )
               : Center(
                 child: Text(
@@ -261,6 +247,8 @@ class _StudentEnrolmentManagementState
                   ),
                 ),
               ),
+        ],
+      ),
     );
   }
 }

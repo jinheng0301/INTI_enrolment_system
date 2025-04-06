@@ -25,7 +25,7 @@ class StudentEnrolmentManagementController {
       await repository.approveDropRequest(requestId);
       showSnackBar(context, 'Drop request approved.');
     } catch (e) {
-      showSnackBar(context, 'Failed to approve drop request: $e');
+      showSnackBar(context, 'Failed to approve drop request: ${e.toString()}');
     }
   }
 
