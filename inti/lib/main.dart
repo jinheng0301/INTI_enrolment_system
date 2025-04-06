@@ -62,13 +62,9 @@ class MyApp extends ConsumerWidget {
                 } else {
                   final userRole = snapshot.data ?? 'student';
                   if (userRole == 'admin') {
-                    return AdminHomeScreen(
-                      uid: firebaseAuth!,
-                    ); // Navigate to AdminHomeScreen
+                    return AdminHomeScreen(uid: firebaseAuth!);
                   } else {
-                    return StudentHomeScreen(
-                      uid: firebaseAuth!,
-                    ); // Navigate to StudentHomeScreen
+                    return StudentHomeScreen(uid: firebaseAuth!);
                   }
                 }
               },

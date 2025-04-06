@@ -9,6 +9,7 @@ import 'package:inti/common/widgets/drawer_list.dart';
 import 'package:inti/common/widgets/error.dart';
 import 'package:inti/common/widgets/loader.dart';
 import 'package:inti/screens_&_features/student/widgets/course_container.dart';
+import 'package:intl/intl.dart';
 
 class CourseEnrolmentScreen extends ConsumerStatefulWidget {
   static const routeName = '/course-enrolment-screen';
@@ -65,6 +66,27 @@ class _CourseEnrolmentScreenState extends ConsumerState<CourseEnrolmentScreen> {
               )
               .toList(); // Filter out already enrolled courses
         });
+  }
+
+  // Date check implementation
+  // Check if the current date is within the enrollment period (1st to 8th of the month)
+  bool get isEnrollmentOpen {
+    final now = DateTime.now();
+    return now.day >= 1 && now.day <= 3; // Enrollment open from 1st to 8th
+  }
+
+  // Get the enrollment period message
+  // This method returns a message indicating the enrollment period and whether it's open or closed.
+  String get enrollmentPeriodMesaage {
+    final nextMonth = DateTime.now().month + 1;
+    return isEnrollmentOpen
+        ? 'Enrollment period: 1st - 8th of the month (OPEN NOW)'
+        : 'Enrollment closed. Next period: 1st - 8th ${_monthName(nextMonth)}';
+  }
+
+  // Get the month name based on the month number
+  String _monthName(int month) {
+    return DateFormat('MMMM').format(DateTime(2025, month));
   }
 
   @override
@@ -155,8 +177,11 @@ class _CourseEnrolmentScreenState extends ConsumerState<CourseEnrolmentScreen> {
                     SizedBox(height: 10),
 
                     Text(
-                      'Enrolment period: 1st - 8th of the month',
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                      enrollmentPeriodMesaage,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isEnrollmentOpen ? Colors.green : Colors.red,
+                      ),
                     ),
                   ],
                 ),
@@ -166,143 +191,165 @@ class _CourseEnrolmentScreenState extends ConsumerState<CourseEnrolmentScreen> {
             SizedBox(height: 20),
 
             // AVAILABLE COURSES
-            Padding(
-              padding: const EdgeInsets.all(25),
-              child: Container(
-                padding: EdgeInsets.all(16),
-                height: height * .7,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.2),
-                      spreadRadius: 2,
-                      blurRadius: 5,
-                      offset: Offset(0, 3), // changes position of shadow
+            enrollmentPeriodMesaage ==
+                    'Enrollment closed. Next period: 1st - 8th ${_monthName(DateTime.now().month + 1)}'
+                ? Center(
+                  child: Text(
+                    'Enrollment closed. Please come again on the 1st - 8th of each month.',
+                    style: TextStyle(fontSize: 16, color: Colors.red),
+                  ),
+                )
+                : Padding(
+                  padding: const EdgeInsets.all(25),
+                  child: Container(
+                    padding: EdgeInsets.all(16),
+                    height: height * .7,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.2),
+                          spreadRadius: 2,
+                          blurRadius: 5,
+                          offset: Offset(0, 3), // changes position of shadow
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Available Courses',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Available Courses',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
 
-                    SizedBox(height: 10),
+                        SizedBox(height: 10),
 
-                    Expanded(
-                      child: StreamBuilder<List<Map<String, dynamic>>>(
-                        stream: fetchCourses(),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return Loader();
-                          } else if (snapshot.hasError) {
-                            return ErrorScreen(
-                              error: snapshot.error.toString(),
-                            );
-                          } else if (!snapshot.hasData ||
-                              snapshot.data!.isEmpty) {
-                            return Center(child: Text('No courses available'));
-                          }
+                        Expanded(
+                          child: StreamBuilder<List<Map<String, dynamic>>>(
+                            stream: fetchCourses(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return Loader();
+                              } else if (snapshot.hasError) {
+                                return ErrorScreen(
+                                  error: snapshot.error.toString(),
+                                );
+                              } else if (!snapshot.hasData ||
+                                  snapshot.data!.isEmpty) {
+                                return Center(
+                                  child: Text('No courses available'),
+                                );
+                              }
 
-                          final courses = snapshot.data!;
+                              final courses = snapshot.data!;
 
-                          return ListView.builder(
-                            itemCount: courses.length,
-                            itemBuilder: (context, index) {
-                              final course = courses[index];
+                              return ListView.builder(
+                                itemCount: courses.length,
+                                itemBuilder: (context, index) {
+                                  final course = courses[index];
 
-                              return Container(
-                                margin: EdgeInsets.only(bottom: 20),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: Colors.grey.shade300,
-                                    width: 1.5,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.grey.withOpacity(0.3),
-                                      blurRadius: 5,
-                                      offset: Offset(2, 2),
+                                  return Container(
+                                    margin: EdgeInsets.only(bottom: 20),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: Colors.grey.shade300,
+                                        width: 1.5,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.grey.withOpacity(0.3),
+                                          blurRadius: 5,
+                                          offset: Offset(2, 2),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                                child: CourseContainer(
-                                  courseName: course['courseName'] ?? 'N/A',
-                                  courseCode: course['courseCode'] ?? 'N/A',
-                                  lecturerName: course['lecturerName'] ?? 'N/A',
-                                  schedule: course['schedule'] ?? 'N/A',
-                                  venue: course['venue'] ?? 'N/A',
-                                  availableSeats:
-                                      course['availableSeats']?.toString() ??
-                                      'N/A',
-                                  creditHours: course['creditHours'] ?? 0,
-                                  onEnroll: () async {
-                                    if (enrolledCourseIds.length >= 5) {
-                                      showSnackBar(
-                                        context,
-                                        '❌ You can only enroll in 5 courses.',
-                                      );
-                                      return;
-                                    }
+                                    child: CourseContainer(
+                                      courseName: course['courseName'] ?? 'N/A',
+                                      courseCode: course['courseCode'] ?? 'N/A',
+                                      lecturerName:
+                                          course['lecturerName'] ?? 'N/A',
+                                      schedule: course['schedule'] ?? 'N/A',
+                                      venue: course['venue'] ?? 'N/A',
+                                      availableSeats:
+                                          course['availableSeats']
+                                              ?.toString() ??
+                                          'N/A',
+                                      creditHours: course['creditHours'] ?? 0,
+                                      onEnroll: () async {
+                                        if (!isEnrollmentOpen) {
+                                          showSnackBar(
+                                            context,
+                                            '❌ Enrollment closed and only allowed from 1st to 8th of the month.',
+                                          );
+                                          return;
+                                        }
 
-                                    try {
-                                      final courseController = ref.read(
-                                        courseEnrolmentControllerProvider,
-                                      );
+                                        if (enrolledCourseIds.length >= 5) {
+                                          showSnackBar(
+                                            context,
+                                            '❌ You can only enroll in 5 courses.',
+                                          );
+                                          return;
+                                        }
 
-                                      await courseController.enrollInCourse(
-                                        userId: widget.uid,
-                                        courseId: course['courseCode'],
-                                        courseName:
-                                            course['courseName'] ?? 'N/A',
-                                        lecturerName:
-                                            course['lecturerName'] ?? 'N/A',
-                                        schedule: course['schedule'] ?? 'N/A',
-                                        venue: course['venue'] ?? 'N/A',
-                                        creditHours: course['creditHours'] ?? 0,
-                                        context: context,
-                                        enrollmentDate: DateTime.now(),
-                                      );
+                                        try {
+                                          final courseController = ref.read(
+                                            courseEnrolmentControllerProvider,
+                                          );
 
-                                      // ✅ Refresh the list by re-fetching enrolled courses
-                                      await fetchEnrolledCourses();
+                                          await courseController.enrollInCourse(
+                                            userId: widget.uid,
+                                            courseId: course['courseCode'],
+                                            courseName:
+                                                course['courseName'] ?? 'N/A',
+                                            lecturerName:
+                                                course['lecturerName'] ?? 'N/A',
+                                            schedule:
+                                                course['schedule'] ?? 'N/A',
+                                            venue: course['venue'] ?? 'N/A',
+                                            creditHours:
+                                                course['creditHours'] ?? 0,
+                                            context: context,
+                                            enrollmentDate: DateTime.now(),
+                                          );
 
-                                      // ✅ Trigger UI update
-                                      setState(() {});
+                                          // ✅ Refresh the list by re-fetching enrolled courses
+                                          await fetchEnrolledCourses();
 
-                                      showSnackBar(
-                                        context,
-                                        'Enrolled successfully in ${course['courseCode']} and ${course['courseName']}!',
-                                      );
-                                    } catch (e) {
-                                      showSnackBar(
-                                        context,
-                                        'Failed to enroll: $e',
-                                      );
-                                    }
-                                  },
-                                ),
+                                          // ✅ Trigger UI update
+                                          setState(() {});
+
+                                          showSnackBar(
+                                            context,
+                                            'Enrolled successfully in ${course['courseCode']} and ${course['courseName']}!',
+                                          );
+                                        } catch (e) {
+                                          showSnackBar(
+                                            context,
+                                            'Failed to enroll: $e',
+                                          );
+                                        }
+                                      },
+                                    ),
+                                  );
+                                },
                               );
                             },
-                          );
-                        },
-                      ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
           ],
         ),
       ),

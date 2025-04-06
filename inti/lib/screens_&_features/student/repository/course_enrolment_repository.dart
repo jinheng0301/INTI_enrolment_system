@@ -108,4 +108,51 @@ class CourseEnrolmentRepository {
       throw Exception('Failed to submit drop request: $e');
     }
   }
+
+  Future<bool> checkIfCanAddCourse({required String studentId}) async {
+    try {
+      // Check if total enrolled courses is less than 5
+      QuerySnapshot enrolledCourses =
+          await firestore
+              .collection('users')
+              .doc(studentId)
+              .collection('student_course_enrolment')
+              .get();
+
+      if (enrolledCourses.docs.length >= 5) {
+        return false; // Already has 5 courses
+      }
+
+      // Check if at least one drop request has been approved
+      QuerySnapshot approvedDrops =
+          await firestore
+              .collection('drop_requests')
+              .where('studentId', isEqualTo: studentId)
+              .where('status', isEqualTo: 'approved')
+              .get();
+
+      return approvedDrops.docs.isNotEmpty; // Can add if has an approved drop
+    } catch (e) {
+      print("❌ Error checking if can add course: $e");
+      return false;
+    }
+  }
+
+  Future<void> markDropRequestUsed({
+    required String studentId,
+    required String dropRequestId,
+  }) async {
+    try {
+      // Update the drop request to indicate it has been used to add a new course
+      await firestore.collection('drop_requests').doc(dropRequestId).update({
+        'used': true,
+        'usedDate': FieldValue.serverTimestamp(),
+      });
+
+      print("✅ Drop request marked as used: $dropRequestId");
+    } catch (e) {
+      print("❌ Error marking drop request as used: $e");
+      throw Exception('Failed to update drop request status: $e');
+    }
+  }
 }

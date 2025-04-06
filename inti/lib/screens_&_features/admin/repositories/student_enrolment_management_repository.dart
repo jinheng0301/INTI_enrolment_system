@@ -33,13 +33,16 @@ class StudentEnrolmentManagementRepository {
                 .where('courseId', isEqualTo: data['courseId'])
                 .get();
 
-        // 2. Delete all matching enrollments (should be 1)
+        // 2. Delete the enrollment
         for (var doc in enrollmentQuery.docs) {
           await doc.reference.delete();
         }
 
-        // 3. Delete drop request
-        await doc.reference.delete();
+        // 3. Update drop request status to approved (instead of deleting)
+        await firestore.collection('drop_requests').doc(requestId).update({
+          'status': 'approved',
+          'processedDate': FieldValue.serverTimestamp(),
+        });
       }
     } catch (e) {
       throw Exception('Failed to approve drop: $e');
@@ -48,8 +51,11 @@ class StudentEnrolmentManagementRepository {
 
   Future<void> rejectDropRequest(String requestId) async {
     try {
-      // Simply delete the drop request document
-      await firestore.collection('drop_requests').doc(requestId).delete();
+      // Update status to rejected (instead of deleting)
+      await firestore.collection('drop_requests').doc(requestId).update({
+        'status': 'rejected',
+        'processedDate': FieldValue.serverTimestamp(),
+      });
     } catch (e) {
       throw Exception('Failed to reject drop: $e');
     }

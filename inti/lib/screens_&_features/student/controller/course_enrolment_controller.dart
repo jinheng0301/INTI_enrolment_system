@@ -67,4 +67,27 @@ class CourseEnrolmentController {
       showSnackBar(context, 'Failed to submit drop request: $e');
     }
   }
+
+  Future<bool> canAddCourse({required String studentId}) async {
+    try {
+      return await repository.checkIfCanAddCourse(studentId: studentId);
+    } catch (e) {
+      print("❌ Controller error checking if can add course: $e");
+      return false;
+    }
+  }
+
+  Future<void> markDropRequestUsed({
+    required String studentId,
+    required String dropRequestId,
+  }) async {
+    try {
+      await repository.markDropRequestUsed(
+        studentId: studentId,
+        dropRequestId: dropRequestId,
+      );
+    } catch (e) {
+      print("❌ Controller error marking drop request as used: $e");
+    }
+  }
 }
