@@ -2,10 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:inti/common/provider/course_enrolment_provider.dart';
 import 'package:inti/common/utils/color.dart';
 import 'package:inti/common/utils/utils.dart';
 import 'package:inti/common/widgets/drawer_list.dart';
+import 'package:inti/screens_&_features/student/controller/course_enrolment_controller.dart';
 import 'package:inti/screens_&_features/student/repository/course_enrolment_repository.dart';
 
 class AddDropScreen extends ConsumerStatefulWidget {
@@ -187,8 +187,11 @@ class _AddDropScreenState extends ConsumerState<AddDropScreen> {
   }
 
   bool get canAddCourse {
-    // Can add course if: User has an approved drop AND total courses < 5
-    return approvedDropCourseIds.isNotEmpty && enrolledCourses.length < 5;
+    final now = DateTime.now();
+    // Can add course if: User has an approved drop AND total courses < 5 AND current date > 8th of the month
+    return approvedDropCourseIds.isNotEmpty &&
+        enrolledCourses.length < 5 &&
+        now.day >= 8;
   }
 
   // Add this method to fetch approved drop requests
@@ -345,7 +348,7 @@ class _AddDropScreenState extends ConsumerState<AddDropScreen> {
       setState(() => isLoading = true);
 
       await ref
-          .read(courseEnrolmentControllerProvider)
+          .read(CourseEnrolmentController as ProviderListenable)
           .enrollInCourse(
             userId: widget.uid,
             courseId: course['courseCode'],
@@ -442,6 +445,8 @@ class _AddDropScreenState extends ConsumerState<AddDropScreen> {
 
           SizedBox(height: 20),
 
+          // ADD NEW COURSE BUTTON
+          // Only show if user has an approved drop request and less than 5 courses
           ElevatedButton(
             onPressed: canAddCourse ? _showAddCourseDialog : null,
             style: ButtonStyle(

@@ -2,12 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:inti/common/provider/course_enrolment_provider.dart';
 import 'package:inti/common/utils/color.dart';
 import 'package:inti/common/utils/utils.dart';
 import 'package:inti/common/widgets/drawer_list.dart';
 import 'package:inti/common/widgets/error.dart';
 import 'package:inti/common/widgets/loader.dart';
+import 'package:inti/screens_&_features/student/controller/course_enrolment_controller.dart';
 import 'package:inti/screens_&_features/student/widgets/course_container.dart';
 import 'package:intl/intl.dart';
 
@@ -72,7 +72,7 @@ class _CourseEnrolmentScreenState extends ConsumerState<CourseEnrolmentScreen> {
   // Check if the current date is within the enrollment period (1st to 8th of the month)
   bool get isEnrollmentOpen {
     final now = DateTime.now();
-    return now.day >= 1 && now.day <= 3; // Enrollment open from 1st to 8th
+    return now.day >= 1 && now.day <= 8; // Enrollment open from 1st to 8th
   }
 
   // Get the enrollment period message
@@ -128,7 +128,7 @@ class _CourseEnrolmentScreenState extends ConsumerState<CourseEnrolmentScreen> {
         child: Column(
           children: [
             Text(
-              'Course Enrolment',
+              'Course Enrollment',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
@@ -303,7 +303,8 @@ class _CourseEnrolmentScreenState extends ConsumerState<CourseEnrolmentScreen> {
 
                                         try {
                                           final courseController = ref.read(
-                                            courseEnrolmentControllerProvider,
+                                            CourseEnrolmentController
+                                                as ProviderListenable,
                                           );
 
                                           await courseController.enrollInCourse(

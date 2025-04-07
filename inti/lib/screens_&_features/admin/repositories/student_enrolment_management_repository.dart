@@ -12,10 +12,6 @@ class StudentEnrolmentManagementRepository {
 
   StudentEnrolmentManagementRepository({required this.firestore});
 
-  // Approve drop request:
-  // 1. Remove course from student's enrolled courses.
-  // 2. Update the drop request status.
-  // In StudentEnrolmentManagementRepository
   Future<void> approveDropRequest(String requestId) async {
     try {
       final doc =

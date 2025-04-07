@@ -100,6 +100,7 @@ class CourseEnrolmentRepository {
         'status': 'pending', // Options: pending/approved/rejected
         'requestDate': FieldValue.serverTimestamp(),
         'processedDate': null,
+        'used': false,
       });
 
       print("✅ Drop request submitted for course: $courseId");
