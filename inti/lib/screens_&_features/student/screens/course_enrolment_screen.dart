@@ -303,8 +303,7 @@ class _CourseEnrolmentScreenState extends ConsumerState<CourseEnrolmentScreen> {
 
                                         try {
                                           final courseController = ref.read(
-                                            CourseEnrolmentController
-                                                as ProviderListenable,
+                                            courseEnrolmentControllerProvider,
                                           );
 
                                           await courseController.enrollInCourse(

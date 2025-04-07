@@ -348,7 +348,7 @@ class _AddDropScreenState extends ConsumerState<AddDropScreen> {
       setState(() => isLoading = true);
 
       await ref
-          .read(CourseEnrolmentController as ProviderListenable)
+          .read(courseEnrolmentControllerProvider)
           .enrollInCourse(
             userId: widget.uid,
             courseId: course['courseCode'],
