@@ -62,7 +62,9 @@ class _ManageCourseScreenState extends ConsumerState<ManageCourseScreen> {
     });
   }
 
-  Future<void> _showDialog() async {
+  Future<void> _showAddCourseDialog() async {
+    clearForm();
+
     return showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -301,6 +303,16 @@ class _ManageCourseScreenState extends ConsumerState<ManageCourseScreen> {
     );
   }
 
+  void clearForm() {
+    courseNameController.clear();
+    courseCodeController.clear();
+    lecturerNameController.clear();
+    scheduleController.clear();
+    venueController.clear();
+    availableSeatsController.clear();
+    creditHoursController.clear();
+  }
+
   @override
   Widget build(BuildContext context) {
     // final height = MediaQuery.of(context).size.height;
@@ -376,7 +388,7 @@ class _ManageCourseScreenState extends ConsumerState<ManageCourseScreen> {
           SizedBox(height: 20),
 
           ElevatedButton(
-            onPressed: _showDialog,
+            onPressed: _showAddCourseDialog,
             child: Text(
               'Add new course',
               style: TextStyle(
@@ -452,7 +464,8 @@ class _ManageCourseScreenState extends ConsumerState<ManageCourseScreen> {
                                               'id': course.id,
                                               'courseName': course.courseName,
                                               'courseCode': course.courseCode,
-                                              'lecturerName': course.lecturerName,
+                                              'lecturerName':
+                                                  course.lecturerName,
                                               'schedule': course.schedule,
                                               'venue': course.venue,
                                               'availableSeats':

@@ -138,7 +138,7 @@ class _DrawerListState extends ConsumerState<DrawerList> {
                 Navigator.pushNamed(context, '/course-enrolment-screen');
               },
               leading: Icon(Icons.school),
-              title: Text('Enrolment'),
+              title: Text('Course Enrollment'),
             ),
             ListTile(
               onTap: () {
@@ -148,7 +148,9 @@ class _DrawerListState extends ConsumerState<DrawerList> {
               title: Text('Add / Drop Courses'),
             ),
             ListTile(
-              onTap: () {},
+              onTap: () {
+                Navigator.pushNamed(context, '/statement-screen');
+              },
               leading: Icon(Icons.receipt),
               title: Text('Statement of Account'),
             ),

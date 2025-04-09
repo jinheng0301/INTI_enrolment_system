@@ -8,6 +8,7 @@ import 'package:inti/screens_&_features/auth/screens/login_screen.dart';
 import 'package:inti/screens_&_features/auth/screens/sign_up_screen.dart';
 import 'package:inti/screens_&_features/student/screens/add_drop_screen.dart';
 import 'package:inti/screens_&_features/student/screens/course_enrolment_screen.dart';
+import 'package:inti/screens_&_features/student/screens/statement_screen.dart';
 import 'package:inti/screens_&_features/student/screens/student_home_screen.dart';
 
 Route<dynamic> onGenerateRoute(RouteSettings settings) {
@@ -38,6 +39,12 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
     // add drop screen
     case AddDropScreen.routeName:
       return MaterialPageRoute(builder: (_) => AddDropScreen(uid: firebaseAuth!,));
+
+    // statement screen
+    case StatementScreen.routeName:
+      return MaterialPageRoute(
+        builder: (_) => StatementScreen(uid: firebaseAuth!),
+      );
 
     // FOR ADMIN
     // admin home screen

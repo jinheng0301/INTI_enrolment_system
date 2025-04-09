@@ -1,4 +1,4 @@
-class Enrolment {
+class StudentEnrollCourse {
   final String studentId;
   final String courseId;
   final String courseName;
@@ -8,7 +8,7 @@ class Enrolment {
   final int creditHours;
   final DateTime enrollmentDate;
 
-  Enrolment({
+  StudentEnrollCourse({
     required this.studentId,
     required this.courseId,
     required this.courseName,

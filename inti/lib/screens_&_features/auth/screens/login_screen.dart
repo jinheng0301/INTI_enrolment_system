@@ -120,7 +120,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               ),
 
-              Flexible(child: Container(), flex: 2),
+              Flexible(flex: 2, child: Container()),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

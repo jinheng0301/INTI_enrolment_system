@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:inti/models/enrolment.dart';
+import 'package:inti/models/student_enroll_course.dart';
 import 'package:uuid/uuid.dart';
 
 final courseEnrolmentRepositoryProvider = Provider(
@@ -40,7 +40,7 @@ class CourseEnrolmentRepository {
       String enrolmentId = Uuid().v1();
       print("🔍 Generated Enrolment ID: $enrolmentId");
 
-      Enrolment enrolment = Enrolment(
+      StudentEnrollCourse enrolment = StudentEnrollCourse(
         studentId: userId,
         courseId: courseId,
         courseName: courseName,

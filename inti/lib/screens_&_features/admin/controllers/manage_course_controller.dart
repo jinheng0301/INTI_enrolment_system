@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inti/common/utils/utils.dart';
-import 'package:inti/models/course.dart';
+import 'package:inti/models/admin_add_course.dart';
 import 'package:inti/screens_&_features/admin/repositories/manage_course_repository.dart';
 
 final manageCourseControllerProvider = Provider((ref) {
@@ -10,7 +10,7 @@ final manageCourseControllerProvider = Provider((ref) {
   return ManageCourseController(repository: repository, ref: ref);
 });
 
-final coursesStreamProvider = StreamProvider.autoDispose<List<Course>>((ref) {
+final coursesStreamProvider = StreamProvider.autoDispose<List<AdminAddCourse>>((ref) {
   return FirebaseFirestore.instance
       .collection(
         'admin_add_courses',
@@ -19,7 +19,7 @@ final coursesStreamProvider = StreamProvider.autoDispose<List<Course>>((ref) {
       .map(
         (snapshot) =>
             snapshot.docs
-                .map((doc) => Course.fromMap(doc.data(), doc.id))
+                .map((doc) => AdminAddCourse.fromMap(doc.data(), doc.id))
                 .toList(),
       );
 });

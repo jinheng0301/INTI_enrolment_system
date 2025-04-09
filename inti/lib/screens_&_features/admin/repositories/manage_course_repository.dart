@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:inti/models/course.dart';
+import 'package:inti/models/admin_add_course.dart';
 import 'package:uuid/uuid.dart';
 
 final manageCourseRepositoryProvider = Provider(
@@ -24,7 +24,7 @@ class ManageCourseRepository {
     try {
       String courseID = Uuid().v1();
 
-      Course course = Course(
+      AdminAddCourse course = AdminAddCourse(
         id: courseID,
         courseName: courseName,
         courseCode: courseCode,
@@ -47,17 +47,17 @@ class ManageCourseRepository {
     }
   }
 
-  Stream<List<Course>> getCourses() {
+  Stream<List<AdminAddCourse>> getCourses() {
     try {
       return firestore.collection('courses').snapshots().map((snapshot) {
         print("Course snapshot received: ${snapshot.docs.length} documents");
         return snapshot.docs.map((doc) {
           try {
-            return Course.fromMap(doc.data(), doc.id);
+            return AdminAddCourse.fromMap(doc.data(), doc.id);
           } catch (e) {
             print("Error parsing course doc: $e");
             // Return a placeholder course or handle the error
-            return Course(
+            return AdminAddCourse(
               id: doc.id,
               courseName: "Error: ${e.toString().substring(0, 20)}...",
               courseCode: "",
