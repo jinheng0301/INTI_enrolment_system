@@ -175,7 +175,7 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
       final snapshot =
           await FirebaseFirestore.instance
               .collection('drop_requests')
-              .where('status', isEqualTo: 'Pending')
+              .where('status', isEqualTo: 'pending')
               .get();
 
       if (snapshot.docs.isEmpty) {

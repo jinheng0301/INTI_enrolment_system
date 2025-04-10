@@ -29,6 +29,7 @@ class _ManageCourseScreenState extends ConsumerState<ManageCourseScreen> {
   final TextEditingController availableSeatsController =
       TextEditingController();
   final TextEditingController creditHoursController = TextEditingController();
+  List<Map<String, dynamic>> timeSlots = [];
   var firebaseAuth = FirebaseAuth.instance.currentUser?.uid;
   var userData = {};
   bool isLoading = false;
@@ -105,16 +106,20 @@ class _ManageCourseScreenState extends ConsumerState<ManageCourseScreen> {
                       return null;
                     },
                   ),
-                  TextFormField(
-                    controller: scheduleController,
-                    decoration: InputDecoration(labelText: 'Schedule'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter the schedule';
-                      }
-                      return null;
-                    },
+
+                  SizedBox(height: 20),
+                  ...timeSlots.map(
+                    (slot) => ListTile(
+                      title: Text(
+                        '${slot['day']} | ${slot['startTime']} - ${slot['endTime']}',
+                      ),
+                    ),
                   ),
+                  ElevatedButton(
+                    onPressed: () => _addTimeSlotDialog(context),
+                    child: Text('Add Time Slot'),
+                  ),
+
                   TextFormField(
                     controller: venueController,
                     decoration: InputDecoration(labelText: 'Venue'),
@@ -166,8 +171,8 @@ class _ManageCourseScreenState extends ConsumerState<ManageCourseScreen> {
                         courseName: courseNameController.text,
                         courseCode: courseCodeController.text,
                         lecturerName: lecturerNameController.text,
-                        schedule: scheduleController.text,
-                        venue: venueController.text,
+                        schedule: timeSlots,
+                        venue: timeSlots.toString(),
                         availableSeats: int.parse(
                           availableSeatsController.text,
                         ),
@@ -189,7 +194,10 @@ class _ManageCourseScreenState extends ConsumerState<ManageCourseScreen> {
     courseNameController.text = course['courseName'];
     courseCodeController.text = course['courseCode'];
     lecturerNameController.text = course['lecturerName'];
-    scheduleController.text = course['schedule'];
+    timeSlots =
+        course['schedule'] is List
+            ? List<Map<String, dynamic>>.from(course['schedule'])
+            : [];
     venueController.text = course['venue'];
     availableSeatsController.text = course['availableSeats'].toString();
     creditHoursController.text = course['creditHours'].toString();
@@ -204,35 +212,85 @@ class _ManageCourseScreenState extends ConsumerState<ManageCourseScreen> {
               key: _formKey,
               child: Column(
                 children: [
+                  // Course name, code, lecturer fields remain
                   TextFormField(
                     controller: courseNameController,
                     decoration: InputDecoration(labelText: 'Course Name'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the course name';
+                      }
+                      return null;
+                    },
                   ),
                   TextFormField(
                     controller: courseCodeController,
                     decoration: InputDecoration(labelText: 'Course Code'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the course code';
+                      }
+                      return null;
+                    },
                   ),
                   TextFormField(
                     controller: lecturerNameController,
                     decoration: InputDecoration(labelText: 'Lecturer Name'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the lecturer name';
+                      }
+                      return null;
+                    },
                   ),
-                  TextFormField(
-                    controller: scheduleController,
-                    decoration: InputDecoration(labelText: 'Schedule'),
+
+                  // Instead of a schedule TextField, show current time slots:
+                  SizedBox(height: 20),
+
+                  ...timeSlots.map(
+                    (slot) => ListTile(
+                      title: Text(
+                        '${slot['day']} | ${slot['startTime']} - ${slot['endTime']}',
+                      ),
+                    ),
                   ),
+                  ElevatedButton(
+                    onPressed: () => _addTimeSlotDialog(context),
+                    child: Text('Modify Time Slot'),
+                  ),
+
+                  // Venue, available seats, credit hours
                   TextFormField(
                     controller: venueController,
                     decoration: InputDecoration(labelText: 'Venue'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the venue';
+                      }
+                      return null;
+                    },
                   ),
                   TextFormField(
                     controller: availableSeatsController,
                     decoration: InputDecoration(labelText: 'Available Seats'),
                     keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the available seats';
+                      }
+                      return null;
+                    },
                   ),
                   TextFormField(
                     controller: creditHoursController,
                     decoration: InputDecoration(labelText: 'Credit Hours'),
                     keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the credit hours';
+                      }
+                      return null;
+                    },
                   ),
                 ],
               ),
@@ -255,7 +313,8 @@ class _ManageCourseScreenState extends ConsumerState<ManageCourseScreen> {
                         courseName: courseNameController.text,
                         courseCode: courseCodeController.text,
                         lecturerName: lecturerNameController.text,
-                        schedule: scheduleController.text,
+                        // Pass the updated time slots list instead of schedule string
+                        schedule: timeSlots,
                         venue: venueController.text,
                         availableSeats: int.parse(
                           availableSeatsController.text,
@@ -269,6 +328,93 @@ class _ManageCourseScreenState extends ConsumerState<ManageCourseScreen> {
               child: Text('Save Changes'),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  Future<void> _addTimeSlotDialog(BuildContext context) async {
+    String selectedDay = 'Monday';
+    TimeOfDay? startTime;
+    TimeOfDay? endTime;
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder:
+              (context, setState) => AlertDialog(
+                title: Text('Add Time Slot'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DropdownButton<String>(
+                      value: selectedDay,
+                      items:
+                          [
+                                'Monday',
+                                'Tuesday',
+                                'Wednesday',
+                                'Thursday',
+                                'Friday',
+                              ]
+                              .map(
+                                (day) => DropdownMenuItem(
+                                  value: day,
+                                  child: Text(day),
+                                ),
+                              )
+                              .toList(),
+                      onChanged: (value) {
+                        if (value != null) setState(() => selectedDay = value);
+                      },
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        final picked = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.now(),
+                        );
+                        if (picked != null) setState(() => startTime = picked);
+                      },
+                      child: Text(
+                        startTime == null
+                            ? 'Pick Start Time'
+                            : 'Start: ${startTime!.format(context)}',
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        final picked = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.now(),
+                        );
+                        if (picked != null) setState(() => endTime = picked);
+                      },
+                      child: Text(
+                        endTime == null
+                            ? 'Pick End Time'
+                            : 'End: ${endTime!.format(context)}',
+                      ),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      if (startTime != null && endTime != null) {
+                        timeSlots.add({
+                          'day': selectedDay,
+                          'startTime': startTime!.format(context),
+                          'endTime': endTime!.format(context),
+                        });
+                      }
+                      Navigator.pop(context);
+                    },
+                    child: Text('Add'),
+                  ),
+                ],
+              ),
         );
       },
     );
@@ -444,6 +590,7 @@ class _ManageCourseScreenState extends ConsumerState<ManageCourseScreen> {
                         columns: const [
                           DataColumn(label: Text('Course ID')),
                           DataColumn(label: Text('Course Name')),
+                          DataColumn(label: Text('Schedule')),
                           DataColumn(label: Text('Credits')),
                           DataColumn(label: Text('Actions')),
                         ],
@@ -453,6 +600,7 @@ class _ManageCourseScreenState extends ConsumerState<ManageCourseScreen> {
                                 cells: [
                                   DataCell(Text(course.courseCode)),
                                   DataCell(Text(course.courseName)),
+                                  DataCell(Text(course.schedule)),
                                   DataCell(Text(course.creditHours.toString())),
                                   DataCell(
                                     Row(

@@ -188,7 +188,7 @@ class _CourseEnrolmentScreenState extends ConsumerState<CourseEnrolmentScreen> {
               ),
             ),
 
-            SizedBox(height: 20),
+            SizedBox(height: 5),
 
             // AVAILABLE COURSES
             enrollmentPeriodMesaage ==
@@ -277,7 +277,7 @@ class _CourseEnrolmentScreenState extends ConsumerState<CourseEnrolmentScreen> {
                                       courseCode: course['courseCode'] ?? 'N/A',
                                       lecturerName:
                                           course['lecturerName'] ?? 'N/A',
-                                      schedule: course['schedule'] ?? 'N/A',
+                                      schedule: course['schedule'].toString(),
                                       venue: course['venue'] ?? 'N/A',
                                       availableSeats:
                                           course['availableSeats']
@@ -333,6 +333,7 @@ class _CourseEnrolmentScreenState extends ConsumerState<CourseEnrolmentScreen> {
                                             'Enrolled successfully in ${course['courseCode']} and ${course['courseName']}!',
                                           );
                                         } catch (e) {
+                                          print('Failed to enroll: $e');
                                           showSnackBar(
                                             context,
                                             'Failed to enroll: $e',

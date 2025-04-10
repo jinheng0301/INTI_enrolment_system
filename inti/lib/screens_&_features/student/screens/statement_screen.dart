@@ -75,57 +75,129 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
     }
   }
 
-  /// Generates a common timetable as a PDF file.
-  /// In this sample, the timetable is hard-coded.
-  /// You can adjust the timetable rows/columns as needed.
+  /// Generates a full timetable as a PDF file using the same logic as the on-screen timetable.
   Future<Uint8List> generateTimetablePdf(
     List<Map<String, dynamic>> courses,
   ) async {
     final pdf = pw.Document();
+    final days = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
+    final times = [
+      '0800',
+      '0900',
+      '1000',
+      '1100',
+      '1200',
+      '1300',
+      '1400',
+      '1500',
+      '1600',
+      '1700',
+      '1800',
+    ];
 
-    // You can design your timetable layout here.
-    // For example, assume the common timetable has 5 rows (one per course)
-    // and each row displays Course Code, Course Name, Schedule, Venue.
+    // Build a map of timetable data.
+    // Key: hour slot (e.g., '0800'); Value: Map from day to course details.
+    Map<String, Map<String, String>> timetableData = {
+      for (var time in times) time: {for (var day in days) day: ''},
+    };
+
+    // Fill in timetableData:
+    // For each enrolled course, fill the corresponding time slots if the course spans multiple hours.
+    for (var course in enrolledCourses) {
+      String day = course['day'] ?? '';
+
+      // Original times (may be "800", "900", "130", etc.)
+      String rawStart = course['startTime'] ?? '';
+      String rawEnd = course['endTime'] ?? '';
+
+      // Ensure they are at least 4 digits
+      String safeStart = rawStart.padLeft(4, '0');
+      String safeEnd = rawEnd.padLeft(4, '0');
+
+      // e.g. "800" -> "0800"
+
+      int startHour = int.tryParse(safeStart.substring(0, 2)) ?? 0;
+      int endHour = int.tryParse(safeEnd.substring(0, 2)) ?? 0;
+
+      String courseInfo =
+          '${course['courseId'] ?? ''} ${course['courseName'] ?? ''}\n'
+          '[${course['venue'] ?? ''}] ${course['lecturerName'] ?? ''}';
+
+      for (int hour = startHour; hour < endHour; hour++) {
+        String key = (hour < 10 ? '0$hour' : '$hour') + '00';
+        if (timetableData.containsKey(key) &&
+            timetableData[key]!.containsKey(day)) {
+          timetableData[key]![day] = courseInfo;
+        }
+      }
+    }
+
     pdf.addPage(
       pw.Page(
+        pageFormat: PdfPageFormat.a3.landscape,
         build: (pw.Context context) {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text(
-                'Common Timetable',
+                'Student Timetable',
                 style: pw.TextStyle(
                   fontSize: 24,
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),
               pw.SizedBox(height: 20),
-              pw.Table.fromTextArray(
-                headers: ['Course Code', 'Course Name', 'Schedule',  'Lecturer Name', 'Venue'],
-                data:
-                    courses.map((course) {
-                      return [
-                        course['courseId'] ?? '-',
-                        course['courseName'] ?? '-',
-                        course['schedule'] ?? '-',
-                        course['lecturerName'] ?? '-',
-                        course['venue'] ?? '-',
-                      ];
-                    }).toList(),
-                cellAlignment: pw.Alignment.centerLeft,
-                headerStyle: pw.TextStyle(
-                  fontWeight: pw.FontWeight.bold,
-                  fontSize: 12,
-                ),
-                cellStyle: pw.TextStyle(fontSize: 10),
-                headerDecoration: pw.BoxDecoration(color: PdfColors.grey300),
-                cellHeight: 30,
-                cellAlignments: {
-                  0: pw.Alignment.centerLeft,
-                  1: pw.Alignment.centerLeft,
-                  2: pw.Alignment.center,
-                  3: pw.Alignment.center,
+              pw.Table(
+                border: pw.TableBorder.all(width: 0.5),
+                columnWidths: {
+                  0: pw.FlexColumnWidth(1.5), // Time slot column
+                  for (int i = 1; i <= days.length; i++)
+                    i: pw.FlexColumnWidth(3),
                 },
+                children: [
+                  // Header Row
+                  pw.TableRow(
+                    decoration: pw.BoxDecoration(color: PdfColors.grey300),
+                    children: [
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(4),
+                        child: pw.Text(
+                          'TIME',
+                          style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                        ),
+                      ),
+                      ...days.map(
+                        (d) => pw.Padding(
+                          padding: const pw.EdgeInsets.all(4),
+                          child: pw.Text(
+                            d,
+                            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Data Rows for each time slot
+                  ...times.map((time) {
+                    return pw.TableRow(
+                      children: [
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(4),
+                          child: pw.Text(time),
+                        ),
+                        ...days.map((day) {
+                          return pw.Padding(
+                            padding: const pw.EdgeInsets.all(4),
+                            child: pw.Text(
+                              timetableData[time]![day] ?? '',
+                              textAlign: pw.TextAlign.center,
+                            ),
+                          );
+                        }),
+                      ],
+                    );
+                  }),
+                ],
               ),
             ],
           );
@@ -160,35 +232,114 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
     }
   }
 
-  Widget buildTimetableTable() {
-    if (enrolledCourses.isEmpty) {
-      return Text(
-        'No enrolled courses to display.',
-        style: TextStyle(fontSize: 16),
-      );
+  /// Builds the complete timetable grid using Flutter's Table widget.
+  Widget buildTimetableGrid() {
+    final days = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
+    final times = [
+      '0800',
+      '0900',
+      '1000',
+      '1100',
+      '1200',
+      '1300',
+      '1400',
+      '1500',
+      '1600',
+      '1700',
+      '1800',
+    ];
+
+    // Build a map for the grid.
+    Map<String, Map<String, String>> timetableData = {
+      for (var time in times) time: {for (var day in days) day: ''},
+    };
+
+    // Debug: Print enrolledCourses to ensure data is being fetched
+    print('Enrolled Courses: $enrolledCourses');
+
+    for (var course in enrolledCourses) {
+      String day = course['day'] ?? '';
+      String startTime = course['startTime'] ?? '';
+      String endTime = course['endTime'] ?? '';
+      String courseInfo =
+          '${course['courseCode'] ?? ''}\n${course['courseName'] ?? ''}\n[${course['venue'] ?? ''}]';
+
+      // Debug: Print course details
+      print('Processing course: $course');
+
+      // Validate startTime and endTime lengths
+      if (startTime.length < 4 || endTime.length < 4) {
+        print('Invalid time format for course: $course');
+        continue; // Skip this course if times are invalid
+      }
+
+      int startHour = int.tryParse(startTime.substring(0, 2)) ?? 0;
+      int endHour = int.tryParse(endTime.substring(0, 2)) ?? 0;
+
+      for (int hour = startHour; hour < endHour; hour++) {
+        String key = (hour < 10 ? '0$hour' : '$hour') + '00';
+        if (timetableData.containsKey(key) &&
+            timetableData[key]!.containsKey(day)) {
+          timetableData[key]![day] = courseInfo;
+        }
+      }
     }
 
-    return DataTable(
-      columnSpacing: 30,
-      columns: const [
-        DataColumn(label: Text('Course Code')),
-        DataColumn(label: Text('Course Name')),
-        DataColumn(label: Text('Schedule')),
-        DataColumn(label: Text('Lecturer Name')),
-        DataColumn(label: Text('Venue')),
-      ],
-      rows:
-          enrolledCourses.map((course) {
-            return DataRow(
-              cells: [
-                DataCell(Text(course['courseId'] ?? '-')),
-                DataCell(Text(course['courseName'] ?? '-')),
-                DataCell(Text(course['schedule'] ?? '-')),
-                DataCell(Text(course['lecturerName'] ?? '-')),
-                DataCell(Text(course['venue'] ?? '-')),
+    // Debug: Print timetableData to verify grid population
+    print('Timetable Data: $timetableData');
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        child: Table(
+          border: TableBorder.all(width: 0.5, color: Colors.grey),
+          defaultColumnWidth: FixedColumnWidth(120),
+          children: [
+            // Header Row
+            TableRow(
+              decoration: BoxDecoration(color: Colors.grey[300]),
+              children: [
+                Container(
+                  padding: EdgeInsets.all(8),
+                  child: Text(
+                    'TIME',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                ...days.map(
+                  (day) => Container(
+                    padding: EdgeInsets.all(8),
+                    child: Text(
+                      day,
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
               ],
-            );
-          }).toList(),
+            ),
+            // Data Rows
+            ...times.map((time) {
+              return TableRow(
+                children: [
+                  Container(padding: EdgeInsets.all(8), child: Text(time)),
+                  ...days.map((day) {
+                    return Container(
+                      padding: EdgeInsets.all(6),
+                      height: 50,
+                      child: Text(
+                        timetableData[time]![day] ?? '',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    );
+                  }).toList(),
+                ],
+              );
+            }).toList(),
+          ],
+        ),
+      ),
     );
   }
 
@@ -280,7 +431,7 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
               ),
             ),
             SizedBox(height: 10),
-            buildTimetableTable(),
+            Expanded(child: buildTimetableGrid()),
           ],
         ),
       ),

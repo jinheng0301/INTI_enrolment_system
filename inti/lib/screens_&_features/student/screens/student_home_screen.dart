@@ -151,10 +151,15 @@ class _StudentHomeScreenState extends ConsumerState<StudentHomeScreen> {
             Container(
               color: Colors.transparent,
               width: double.infinity,
-              height: height * .5,
+              height: height * .7,
               child: Stack(
                 children: [
-                  Image.asset('images/inti_background.jpg', fit: BoxFit.cover),
+                  Container(
+                    color: Colors.transparent,
+                    width: double.infinity,
+                    height: height * .7,
+                    child: Image.asset('images/m3p.jpg', fit: BoxFit.cover),
+                  ),
 
                   Positioned(
                     bottom: 10,

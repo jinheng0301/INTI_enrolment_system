@@ -10,7 +10,9 @@ final manageCourseControllerProvider = Provider((ref) {
   return ManageCourseController(repository: repository, ref: ref);
 });
 
-final coursesStreamProvider = StreamProvider.autoDispose<List<AdminAddCourse>>((ref) {
+final coursesStreamProvider = StreamProvider.autoDispose<List<AdminAddCourse>>((
+  ref,
+) {
   return FirebaseFirestore.instance
       .collection(
         'admin_add_courses',
@@ -34,7 +36,7 @@ class ManageCourseController {
     required String courseName,
     required String courseCode,
     required String lecturerName,
-    required String schedule,
+    required List<Map<String, dynamic>> schedule,
     required String venue,
     required int availableSeats,
     required int creditHours,
@@ -62,7 +64,7 @@ class ManageCourseController {
     required String courseName,
     required String courseCode,
     required String lecturerName,
-    required String schedule,
+    required List<Map<String, dynamic>> schedule,
     required String venue,
     required int availableSeats,
     required int creditHours,

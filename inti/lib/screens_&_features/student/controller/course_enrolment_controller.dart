@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inti/common/utils/utils.dart';
@@ -19,20 +21,32 @@ class CourseEnrolmentController {
     required String courseId,
     required String courseName,
     required String lecturerName,
-    required String schedule,
+    required dynamic schedule,
     required String venue,
     required int creditHours,
     required BuildContext context,
     required DateTime enrollmentDate,
   }) async {
     try {
+      // Convert schedule to proper type
+      List<Map<String, dynamic>> convertedSchedule = [];
+
+      if (schedule is List) {
+        convertedSchedule = schedule.cast<Map<String, dynamic>>();
+      } else if (schedule is String) {
+        // Handle if stored as JSON string
+        convertedSchedule = List<Map<String, dynamic>>.from(
+          json.decode(schedule),
+        );
+      }
+
       // Call the repository method to handle Firestore write
       await repository.enrollInCourse(
         userId: userId,
         courseId: courseId,
         courseName: courseName,
         lecturerName: lecturerName,
-        schedule: schedule,
+        schedule: convertedSchedule, // Pass the converted list
         venue: venue,
         creditHours: creditHours,
         enrollmentDate: enrollmentDate,

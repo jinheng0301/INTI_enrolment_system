@@ -22,7 +22,7 @@ class CourseEnrolmentRepository {
     required String courseId,
     required String courseName,
     required String lecturerName,
-    required String schedule,
+    required List<Map<String, dynamic>> schedule,
     required String venue,
     required int creditHours,
     required DateTime enrollmentDate,
