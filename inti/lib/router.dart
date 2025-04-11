@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:inti/common/widgets/error.dart';
 import 'package:inti/screens_&_features/admin/screens/admin_home_screen.dart';
 import 'package:inti/screens_&_features/admin/screens/manage_course_screen.dart';
+import 'package:inti/screens_&_features/admin/screens/payment_verification_screen.dart';
 import 'package:inti/screens_&_features/admin/screens/student_enrolment_management_screen.dart';
 import 'package:inti/screens_&_features/auth/screens/login_screen.dart';
 import 'package:inti/screens_&_features/auth/screens/sign_up_screen.dart';
 import 'package:inti/screens_&_features/student/screens/add_drop_screen.dart';
 import 'package:inti/screens_&_features/student/screens/course_enrolment_screen.dart';
+import 'package:inti/screens_&_features/student/screens/payment_screen.dart';
 import 'package:inti/screens_&_features/student/screens/statement_screen.dart';
 import 'package:inti/screens_&_features/student/screens/student_home_screen.dart';
 
@@ -38,12 +40,20 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
 
     // add drop screen
     case AddDropScreen.routeName:
-      return MaterialPageRoute(builder: (_) => AddDropScreen(uid: firebaseAuth!,));
+      return MaterialPageRoute(
+        builder: (_) => AddDropScreen(uid: firebaseAuth!),
+      );
 
     // statement screen
     case StatementScreen.routeName:
       return MaterialPageRoute(
         builder: (_) => StatementScreen(uid: firebaseAuth!),
+      );
+
+    // payment screen
+    case PaymentScreen.routeName:
+      return MaterialPageRoute(
+        builder: (_) => PaymentScreen(uid: firebaseAuth!),
       );
 
     // FOR ADMIN
@@ -60,9 +70,15 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
       );
 
     // student enrolment management screen
-      case StudentEnrolmentManagementScreen.routeName:
+    case StudentEnrolmentManagementScreen.routeName:
       return MaterialPageRoute(
         builder: (_) => StudentEnrolmentManagementScreen(uid: firebaseAuth!),
+      );
+
+    // payment verifiaction screen
+    case PaymentVerificationScreen.routeName:
+      return MaterialPageRoute(
+        builder: (_) => PaymentVerificationScreen(uid: firebaseAuth!),
       );
 
     // error screen

@@ -155,7 +155,9 @@ class _DrawerListState extends ConsumerState<DrawerList> {
               title: Text('Statement of Account'),
             ),
             ListTile(
-              onTap: () {},
+              onTap: () {
+                Navigator.pushNamed(context, '/payment-screen');
+              },
               leading: Icon(Icons.payment),
               title: Text('Payment'),
             ),
@@ -183,7 +185,9 @@ class _DrawerListState extends ConsumerState<DrawerList> {
               title: Text('Student Enrolment Management'),
             ),
             ListTile(
-              onTap: () {},
+              onTap: () {
+                Navigator.pushNamed(context, '/payment-verification-screen');
+              },
               leading: Icon(Icons.payment),
               title: Text('Payment Verification'),
             ),
