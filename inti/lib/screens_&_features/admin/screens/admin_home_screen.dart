@@ -189,6 +189,25 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
     }
   }
 
+  Future<int> getTotalPaymentRequests() async {
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('user_payment_record')
+              .where('status', isEqualTo: 'pending')
+              .get();
+
+      if (snapshot.docs.isEmpty) {
+        print('No payment requests found in the database.');
+      }
+
+      return snapshot.docs.length;
+    } catch (e) {
+      print('Error fetching total payment requests: $e');
+      return 0;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
@@ -277,7 +296,7 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
               children: [
                 courseSummary('Total Course(s)', getTotalCourses()),
                 courseSummary('Pending drop requests', getTotalDropRequests()),
-                courseSummary('Payments verified', Future.value(30)),
+                courseSummary('Payments pending requests', getTotalPaymentRequests()),
                 courseSummary('Total Student(s)', getTotalStudents()),
                 courseSummary('Total Admin(s)', getTotalAdmins()),
               ],
