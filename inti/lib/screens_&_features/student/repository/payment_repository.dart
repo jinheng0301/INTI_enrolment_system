@@ -139,7 +139,29 @@ class PaymentRepository {
     }
   }
 
-  // Process a fee payment and update the savings account (deduct fee)
+  // Add this method to your PaymentRepository class
+  Future<void> recordTransaction({
+    required String paymentId,
+    required String type, // 'Payment' or 'Reload'
+    required double amount,
+    required double balanceAfter,
+  }) async {
+    try {
+      await firestore.collection('payment_transactions').add({
+        'paymentId': paymentId,
+        'type': type,
+        'amount': amount,
+        'balanceAfter': balanceAfter,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+      print("✅ Transaction recorded: $type, amount: $amount");
+    } catch (e) {
+      print("❌ Error recording transaction: $e");
+      throw Exception('Failed to record transaction: $e');
+    }
+  }
+
+  // Then modify the processPayment method to record the transaction
   Future<void> processPayment({
     required String paymentId,
     required double feeAmount,
@@ -148,6 +170,8 @@ class PaymentRepository {
       DocumentReference paymentDocRef = firestore
           .collection('user_payment_record')
           .doc(paymentId);
+
+      double updatedAmount = 0;
 
       await firestore.runTransaction((transaction) async {
         DocumentSnapshot snapshot = await transaction.get(paymentDocRef);
@@ -169,12 +193,21 @@ class PaymentRepository {
         }
 
         // Deduct the fee amount
-        double updatedAmount = currentAmount - feeAmount;
+        updatedAmount = currentAmount - feeAmount;
         transaction.update(paymentDocRef, {
           'savingsAccount': updatedAmount,
           'lastPaymentDate': FieldValue.serverTimestamp(),
         });
       });
+
+      // Record the transaction
+      await recordTransaction(
+        paymentId: paymentId,
+        type: 'Payment',
+        amount: feeAmount,
+        balanceAfter: updatedAmount,
+      );
+
       print("✅ Payment processed, fee deducted: $feeAmount");
     } catch (e) {
       print("❌ Error processing payment: $e");
@@ -182,7 +215,7 @@ class PaymentRepository {
     }
   }
 
-  // Reload the savings account
+  // And the reloadSavingsAccount method should also record the transaction
   Future<void> reloadSavingsAccount({
     required String paymentId,
     required double amount,
@@ -191,6 +224,8 @@ class PaymentRepository {
       DocumentReference paymentDocRef = firestore
           .collection('user_payment_record')
           .doc(paymentId);
+
+      double updatedAmount = 0;
 
       await firestore.runTransaction((transaction) async {
         DocumentSnapshot snapshot = await transaction.get(paymentDocRef);
@@ -203,12 +238,21 @@ class PaymentRepository {
             (snapshot.get('savingsAccount') as num).toDouble();
 
         // Add the amount
-        double updatedAmount = currentAmount + amount;
+        updatedAmount = currentAmount + amount;
         transaction.update(paymentDocRef, {
           'savingsAccount': updatedAmount,
           'lastReloadDate': FieldValue.serverTimestamp(),
         });
       });
+
+      // Record the transaction
+      await recordTransaction(
+        paymentId: paymentId,
+        type: 'Reload',
+        amount: amount,
+        balanceAfter: updatedAmount,
+      );
+
       print("✅ Account reloaded, amount added: $amount");
     } catch (e) {
       print("❌ Error reloading account: $e");

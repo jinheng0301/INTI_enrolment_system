@@ -343,6 +343,289 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
     );
   }
 
+  void _showTransactionHistoryDialog() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    List<Map<String, dynamic>> paymentHistory = [];
+    String errorMessage = '';
+
+    try {
+      // Get current user's email from userData
+      final userEmail = userData['email'] as String?;
+
+      if (userEmail == null) {
+        errorMessage = 'User email not found';
+      } else {
+        // First, get the payment record to find the paymentId
+        final paymentRecordSnapshot =
+            await FirebaseFirestore.instance
+                .collection('user_payment_record')
+                .where('primaryEmail', isEqualTo: userEmail)
+                .limit(1)
+                .get();
+
+        if (paymentRecordSnapshot.docs.isEmpty) {
+          errorMessage = 'No payment record found';
+        } else {
+          // Get the payment ID
+          final paymentId = paymentRecordSnapshot.docs.first.id;
+
+          // Get payment transactions for this payment record
+          final transactionsSnapshot =
+              await FirebaseFirestore.instance
+                  .collection('payment_transactions')
+                  .where('paymentId', isEqualTo: paymentId)
+                  .orderBy('timestamp', descending: true)
+                  .get();
+
+          paymentHistory =
+              transactionsSnapshot.docs
+                  .map((doc) => {'id': doc.id, ...doc.data()})
+                  .toList();
+        }
+      }
+    } catch (e) {
+      print(errorMessage);
+      errorMessage = 'Error fetching payment history: $e';
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+
+    // Show the dialog with fetched data
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Row(
+              children: [
+                Icon(Icons.history, color: Colors.blue),
+                SizedBox(width: 10),
+                Text('Transaction History'),
+              ],
+            ),
+            content: Container(
+              width: double.maxFinite,
+              constraints: BoxConstraints(maxHeight: 400),
+              child:
+                  errorMessage.isNotEmpty
+                      ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.red,
+                              size: 48,
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              errorMessage,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: Colors.red.shade700),
+                            ),
+                          ],
+                        ),
+                      )
+                      : paymentHistory.isEmpty
+                      ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              color: Colors.blue,
+                              size: 48,
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              'No payment transactions found',
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      )
+                      : Column(
+                        children: [
+                          // Header row
+                          Container(
+                            padding: EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade200,
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Colors.grey.shade400,
+                                  width: 1,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    'Date',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    'Type',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    'Amount',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.right,
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    'Balance',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.right,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // List of transactions
+                          Expanded(
+                            child: ListView.builder(
+                              itemCount: paymentHistory.length,
+                              itemBuilder: (context, index) {
+                                final item = paymentHistory[index];
+                                final timestamp =
+                                    item['timestamp'] as Timestamp?;
+                                final date =
+                                    timestamp != null
+                                        ? DateTime.fromMillisecondsSinceEpoch(
+                                          timestamp.millisecondsSinceEpoch,
+                                        )
+                                        : DateTime.now();
+                                final formattedDate =
+                                    '${date.day}/${date.month}/${date.year}';
+                                final type =
+                                    item['type'] as String? ?? 'Unknown';
+                                final amount = item['amount'] as num? ?? 0;
+                                final balance =
+                                    item['balanceAfter'] as num? ?? 0;
+
+                                // Determine if this is a payment or reload
+                                final isPayment =
+                                    type.toLowerCase() == 'payment';
+
+                                return Container(
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: 12,
+                                    horizontal: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    border: Border(
+                                      bottom: BorderSide(
+                                        color: Colors.grey.shade300,
+                                        width: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(formattedDate),
+                                      ),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              isPayment
+                                                  ? Icons.payments_outlined
+                                                  : Icons
+                                                      .account_balance_wallet,
+                                              color:
+                                                  isPayment
+                                                      ? Colors.red
+                                                      : Colors.green,
+                                              size: 16,
+                                            ),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              type,
+                                              style: TextStyle(
+                                                color:
+                                                    isPayment
+                                                        ? Colors.red.shade700
+                                                        : Colors.green.shade700,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(
+                                          isPayment
+                                              ? '-\$${amount.toStringAsFixed(2)}'
+                                              : '+\$${amount.toStringAsFixed(2)}',
+                                          style: TextStyle(
+                                            color:
+                                                isPayment
+                                                    ? Colors.red.shade700
+                                                    : Colors.green.shade700,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          textAlign: TextAlign.right,
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(
+                                          '\$${balance.toStringAsFixed(2)}',
+                                          textAlign: TextAlign.right,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('Close'),
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // final height = MediaQuery.of(context).size.height;
@@ -408,12 +691,12 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
                 ),
 
                 ElevatedButton(
-                  onPressed: () {},
+                  onPressed: _showTransactionHistoryDialog,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.redAccent,
                   ),
                   child: Text(
-                    'View payment history',
+                    'View Transaction History',
                     style: TextStyle(color: Colors.black),
                   ),
                 ),
