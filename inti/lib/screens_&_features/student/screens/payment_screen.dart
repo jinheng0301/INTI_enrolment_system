@@ -111,7 +111,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   // Dialog for collecting payment info from first-time users
   void _showInitialPaymentDialog() async {
     final addressController = TextEditingController();
-    final postcodeController = TextEditingController();
+    final postCodeController = TextEditingController();
     final countryController = TextEditingController();
     final primaryEmailController = TextEditingController(
       text: userData['email'] ?? '',
@@ -123,7 +123,6 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
     showDialog(
       context: context,
-      barrierDismissible: false, // Force user to fill form
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Welcome! Setup Your Payment Account'),
@@ -153,7 +152,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   ),
                   SizedBox(height: 12),
                   TextFormField(
-                    controller: postcodeController,
+                    controller: postCodeController,
                     decoration: InputDecoration(
                       labelText: 'Postcode',
                       border: OutlineInputBorder(),
@@ -172,8 +171,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                     },
                     initialSelection: 'US', // Set default country code
                     showCountryOnly: false,
-                    showFlag:
-                        true, // Ensure this is set to true // Ensure this is true to display flags
+                    showFlag: true,
                     showOnlyCountryWhenClosed: true,
                     searchDecoration: InputDecoration(
                       labelText: 'Search Country',
@@ -267,7 +265,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                         .read(paymentControllerProvider)
                         .collectUserPaymentData(
                           address: addressController.text,
-                          postcode: int.parse(postcodeController.text),
+                          postcode: int.parse(postCodeController.text),
                           country: countryController.text,
                           primaryEmail: primaryEmailController.text,
                           alternativeEmail: alternativeEmailController.text,
@@ -538,7 +536,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         ),
         title: GestureDetector(
           onTap: () {
-            Navigator.pushNamed(context, '/admin-home-screen');
+            Navigator.pushNamed(context, '/student-home-screen');
           },
           child: Image.asset('images/inti_logo.png', height: 40),
         ),

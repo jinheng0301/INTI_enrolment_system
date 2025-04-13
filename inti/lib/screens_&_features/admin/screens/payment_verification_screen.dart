@@ -159,7 +159,9 @@ class _PaymentVerificationScreenState
 
     return Scaffold(
       key: _scaffoldKey,
+
       drawer: DrawerList(uid: FirebaseAuth.instance.currentUser?.uid ?? ''),
+      
       appBar: AppBar(
         backgroundColor: tabColor,
         toolbarHeight: 80,
@@ -369,8 +371,6 @@ class _PaymentVerificationScreenState
                                           ],
                                         ),
                                         isThreeLine: true,
-                                        onTap:
-                                            () => _showPaymentDetails(payment),
                                       ),
                                     );
                                   },

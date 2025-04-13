@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inti/common/utils/utils.dart';
@@ -8,6 +10,27 @@ final paymentControllerProvider = Provider((ref) {
   final repository = ref.watch(paymentRepositoryProvider);
   return PaymentController(repository: repository, ref: ref);
 });
+
+final updateDetailsStreamProvider =
+    StreamProvider.autoDispose<List<PaymentRecord>>((ref) {
+      final userEmail = FirebaseAuth.instance.currentUser?.email;
+
+      // If no logged-in user, return empty list
+      if (userEmail == null) {
+        return Stream.value([]);
+      }
+
+      return FirebaseFirestore.instance
+          .collection('user_payment_record')
+          .where('primaryEmail', isEqualTo: userEmail)
+          .snapshots()
+          .map(
+            (snapshot) =>
+                snapshot.docs
+                    .map((doc) => PaymentRecord.fromMap(doc.data()))
+                    .toList(),
+          );
+    });
 
 class PaymentController {
   final PaymentRepository repository;
@@ -52,6 +75,31 @@ class PaymentController {
       return paymentId;
     } catch (e) {
       showSnackBar(context, 'Failed to collect payment data: $e');
+      throw Exception(e);
+    }
+  }
+
+  Future<void> updateUserPaymentDetails({
+    required String paymentId,
+    required String address,
+    required int postcode,
+    required String country,
+    required String alternativeEmail,
+    required String emergencyContactName,
+    required String emergencyContactNumber,
+  }) async {
+    try {
+      await repository.updateUserPaymentDetails(
+        paymentId: paymentId,
+        address: address,
+        postcode: postcode,
+        country: country,
+        alternativeEmail: alternativeEmail,
+        emergencyContactName: emergencyContactName,
+        emergencyContactNumber: emergencyContactNumber,
+      );
+    } catch (e) {
+      print('Failed to update payment deatils: $e');
       throw Exception(e);
     }
   }

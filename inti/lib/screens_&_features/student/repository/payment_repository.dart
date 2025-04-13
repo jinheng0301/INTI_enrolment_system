@@ -20,12 +20,13 @@ class PaymentRepository {
   // Check if user has a payment record
   Future<bool> hasPaymentRecord(String email) async {
     try {
-      final snapshot = await firestore
-          .collection('user_payment_record')
-          .where('primaryEmail', isEqualTo: email)
-          .limit(1)
-          .get();
-      
+      final snapshot =
+          await firestore
+              .collection('user_payment_record')
+              .where('primaryEmail', isEqualTo: email)
+              .limit(1)
+              .get();
+
       return snapshot.docs.isNotEmpty;
     } catch (e) {
       print("❌ Error checking payment record: $e");
@@ -36,12 +37,13 @@ class PaymentRepository {
   // Get user's payment record by email
   Future<PaymentRecord?> getPaymentRecordByEmail(String email) async {
     try {
-      final snapshot = await firestore
-          .collection('user_payment_record')
-          .where('primaryEmail', isEqualTo: email)
-          .limit(1)
-          .get();
-      
+      final snapshot =
+          await firestore
+              .collection('user_payment_record')
+              .where('primaryEmail', isEqualTo: email)
+              .limit(1)
+              .get();
+
       if (snapshot.docs.isNotEmpty) {
         return PaymentRecord.fromMap(snapshot.docs.first.data());
       }
@@ -91,15 +93,46 @@ class PaymentRepository {
     }
   }
 
+  Future<void> updateUserPaymentDetails({
+    required String paymentId,
+    required String address,
+    required int postcode,
+    required String country,
+    required String alternativeEmail,
+    required String emergencyContactName,
+    required String emergencyContactNumber,
+  }) async {
+    try {
+      await firestore.collection('user_payment_record').doc(paymentId).update({
+        'address': address,
+        'postcode': postcode,
+        'country': country,
+        'alternativeEmail': alternativeEmail,
+        'emergencyContactName': emergencyContactName,
+        'emergencyContactNumber': emergencyContactNumber,
+      });
+    } catch (e) {
+      print('Failed to update payment deatils: $e');
+    }
+  }
+
   Stream<List<PaymentRecord>> getPayment() {
     try {
-      return firestore.collection('user_payment_record').snapshots().map((
-        snapshot,
-      ) {
-        return snapshot.docs.map((doc) {
-          return PaymentRecord.fromMap(doc.data());
-        }).toList();
-      });
+      final userEmail = auth.currentUser?.email;
+
+      if (userEmail == null) {
+        return Stream.value([]);
+      }
+
+      return firestore
+          .collection('user_payment_record')
+          .where('primaryEmail', isEqualTo: userEmail)
+          .snapshots()
+          .map((snapshot) {
+            return snapshot.docs.map((doc) {
+              return PaymentRecord.fromMap(doc.data());
+            }).toList();
+          });
     } catch (e) {
       print("Error in getPayment stream: $e");
       return Stream.error('Failed to fetch payment records: $e');
@@ -148,7 +181,7 @@ class PaymentRepository {
       throw Exception('Failed to process payment: $e');
     }
   }
-  
+
   // Reload the savings account
   Future<void> reloadSavingsAccount({
     required String paymentId,
@@ -168,7 +201,7 @@ class PaymentRepository {
 
         double currentAmount =
             (snapshot.get('savingsAccount') as num).toDouble();
-        
+
         // Add the amount
         double updatedAmount = currentAmount + amount;
         transaction.update(paymentDocRef, {

@@ -162,7 +162,9 @@ class _DrawerListState extends ConsumerState<DrawerList> {
               title: Text('Payment'),
             ),
             ListTile(
-              onTap: () {},
+              onTap: () {
+                Navigator.pushNamed(context, '/account-management-screen');
+              },
               leading: Icon(Icons.settings),
               title: Text('Account Management'),
             ),

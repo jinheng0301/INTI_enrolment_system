@@ -7,6 +7,7 @@ import 'package:inti/screens_&_features/admin/screens/payment_verification_scree
 import 'package:inti/screens_&_features/admin/screens/student_enrolment_management_screen.dart';
 import 'package:inti/screens_&_features/auth/screens/login_screen.dart';
 import 'package:inti/screens_&_features/auth/screens/sign_up_screen.dart';
+import 'package:inti/screens_&_features/student/screens/account_management_screen.dart';
 import 'package:inti/screens_&_features/student/screens/add_drop_screen.dart';
 import 'package:inti/screens_&_features/student/screens/course_enrolment_screen.dart';
 import 'package:inti/screens_&_features/student/screens/payment_screen.dart';
@@ -54,6 +55,12 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
     case PaymentScreen.routeName:
       return MaterialPageRoute(
         builder: (_) => PaymentScreen(uid: firebaseAuth!),
+      );
+
+    // payment screen
+    case AccountManagementScreen.routeName:
+      return MaterialPageRoute(
+        builder: (_) => AccountManagementScreen(uid: firebaseAuth!),
       );
 
     // FOR ADMIN

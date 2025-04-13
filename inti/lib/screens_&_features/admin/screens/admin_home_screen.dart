@@ -295,8 +295,8 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 courseSummary('Total Course(s)', getTotalCourses()),
-                courseSummary('Pending drop requests', getTotalDropRequests()),
-                courseSummary('Payments pending requests', getTotalPaymentRequests()),
+                courseSummary('Pending drop request(s)', getTotalDropRequests()),
+                courseSummary('Payment pending request(s)', getTotalPaymentRequests()),
                 courseSummary('Total Student(s)', getTotalStudents()),
                 courseSummary('Total Admin(s)', getTotalAdmins()),
               ],

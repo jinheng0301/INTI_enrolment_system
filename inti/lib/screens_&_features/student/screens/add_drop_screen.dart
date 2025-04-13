@@ -150,6 +150,7 @@ class _AddDropScreenState extends ConsumerState<AddDropScreen> {
           content: Form(
             key: _formKey,
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text('Give a suitable reason for your drop course'),
                 TextFormField(
