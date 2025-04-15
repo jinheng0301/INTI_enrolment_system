@@ -59,6 +59,10 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
   }
 
   Future<void> fetchEnrolledCourses() async {
+    setState(() {
+      isLoading = true;
+    });
+
     try {
       var courseSnap =
           await FirebaseFirestore.instance
@@ -66,6 +70,11 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
               .doc(widget.uid)
               .collection('student_course_enrolment')
               .get();
+
+      setState(() {
+        enrolledCourses = courseSnap.docs.map((doc) => doc.data()).toList();
+        isLoading = false;
+      });
 
       setState(() {
         enrolledCourses = courseSnap.docs.map((doc) => doc.data()).toList();
@@ -80,54 +89,92 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
     List<Map<String, dynamic>> courses,
   ) async {
     final pdf = pw.Document();
-    final days = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
-    final times = [
-      '0800',
-      '0900',
-      '1000',
-      '1100',
-      '1200',
-      '1300',
-      '1400',
-      '1500',
-      '1600',
-      '1700',
-      '1800',
+    final days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    final shortDays = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
+    final timeSlots = [
+      '08:00-09:00',
+      '09:00-10:00',
+      '10:00-11:00',
+      '11:00-12:00',
+      '12:00-13:00',
+      '13:00-14:00',
+      '14:00-15:00',
+      '15:00-16:00',
+      '16:00-17:00',
+      '17:00-18:00',
     ];
 
-    // Build a map of timetable data.
-    // Key: hour slot (e.g., '0800'); Value: Map from day to course details.
-    Map<String, Map<String, String>> timetableData = {
-      for (var time in times) time: {for (var day in days) day: ''},
-    };
+    // Create structure to hold timetable data
+    Map<String, Map<String, String>> timetableData = {};
 
-    // Fill in timetableData:
-    // For each enrolled course, fill the corresponding time slots if the course spans multiple hours.
-    for (var course in enrolledCourses) {
-      String day = course['day'] ?? '';
+    // Initialize with empty data
+    for (var timeSlot in timeSlots) {
+      timetableData[timeSlot] = {};
+      for (var day in shortDays) {
+        timetableData[timeSlot]?[day] = '';
+      }
+    }
 
-      // Original times (may be "800", "900", "130", etc.)
-      String rawStart = course['startTime'] ?? '';
-      String rawEnd = course['endTime'] ?? '';
+    // Helper function to convert 12-hour time format to 24-hour format
+    int convertTo24Hour(String time12h) {
+      // Parse time like "10:00 AM" or "2:00 PM"
+      final parts = time12h.split(':');
+      int hour = int.tryParse(parts[0]) ?? 0;
+      final isPM = time12h.toLowerCase().contains('pm');
 
-      // Ensure they are at least 4 digits
-      String safeStart = rawStart.padLeft(4, '0');
-      String safeEnd = rawEnd.padLeft(4, '0');
+      // Convert to 24-hour format
+      if (isPM && hour < 12) hour += 12;
+      if (!isPM && hour == 12) hour = 0;
 
-      // e.g. "800" -> "0800"
+      return hour;
+    }
 
-      int startHour = int.tryParse(safeStart.substring(0, 2)) ?? 0;
-      int endHour = int.tryParse(safeEnd.substring(0, 2)) ?? 0;
+    // Process each course
+    for (var course in courses) {
+      // Each course may have multiple schedule entries
+      final scheduleList = course['schedule'] as List?;
 
-      String courseInfo =
-          '${course['courseId'] ?? ''} ${course['courseName'] ?? ''}\n'
-          '[${course['venue'] ?? ''}] ${course['lecturerName'] ?? ''}';
+      if (scheduleList == null) continue;
 
-      for (int hour = startHour; hour < endHour; hour++) {
-        String key = (hour < 10 ? '0$hour' : '$hour') + '00';
-        if (timetableData.containsKey(key) &&
-            timetableData[key]!.containsKey(day)) {
-          timetableData[key]![day] = courseInfo;
+      // Process each schedule entry
+      for (var scheduleItem in scheduleList) {
+        if (scheduleItem is! Map) continue;
+
+        // Extract day
+        final day = scheduleItem['day'] as String?;
+        if (day == null) continue;
+
+        // Find the corresponding short day code
+        int dayIndex = days.indexOf(day);
+        if (dayIndex == -1) continue;
+        final shortDay = shortDays[dayIndex];
+
+        // Extract start and end times
+        final startTimeStr = scheduleItem['startTime'] as String?;
+        final endTimeStr = scheduleItem['endTime'] as String?;
+
+        if (startTimeStr == null || endTimeStr == null) continue;
+
+        // Convert times to 24-hour format
+        final startHour = convertTo24Hour(startTimeStr);
+        final endHour = convertTo24Hour(endTimeStr);
+
+        // Course info to display in cell
+        String courseInfo =
+            '${course['courseId'] ?? ''} ${course['courseName'] ?? ''}\n'
+            '[${course['venue'] ?? ''}] ${course['lecturerName'] ?? ''}';
+
+        // Find matching time slots
+        for (var timeSlot in timeSlots) {
+          // Parse the timeSlot (e.g., "08:00-09:00")
+          final slotHours = timeSlot.split('-');
+          final slotStartHour = int.parse(slotHours[0].split(':')[0]);
+          final slotEndHour = int.parse(slotHours[1].split(':')[0]);
+
+          // If the course time overlaps with this slot
+          if (startHour < slotEndHour && endHour > slotStartHour) {
+            timetableData[timeSlot]?[shortDay] = courseInfo;
+          }
         }
       }
     }
@@ -151,7 +198,7 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
                 border: pw.TableBorder.all(width: 0.5),
                 columnWidths: {
                   0: pw.FlexColumnWidth(1.5), // Time slot column
-                  for (int i = 1; i <= days.length; i++)
+                  for (int i = 1; i <= shortDays.length; i++)
                     i: pw.FlexColumnWidth(3),
                 },
                 children: [
@@ -166,7 +213,7 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
                           style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                         ),
                       ),
-                      ...days.map(
+                      ...shortDays.map(
                         (d) => pw.Padding(
                           padding: const pw.EdgeInsets.all(4),
                           child: pw.Text(
@@ -178,18 +225,18 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
                     ],
                   ),
                   // Data Rows for each time slot
-                  ...times.map((time) {
+                  ...timeSlots.map((timeSlot) {
                     return pw.TableRow(
                       children: [
                         pw.Padding(
                           padding: const pw.EdgeInsets.all(4),
-                          child: pw.Text(time),
+                          child: pw.Text(timeSlot),
                         ),
-                        ...days.map((day) {
+                        ...shortDays.map((day) {
                           return pw.Padding(
                             padding: const pw.EdgeInsets.all(4),
                             child: pw.Text(
-                              timetableData[time]![day] ?? '',
+                              timetableData[timeSlot]![day] ?? '',
                               textAlign: pw.TextAlign.center,
                             ),
                           );
@@ -208,79 +255,167 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
     return pdf.save();
   }
 
-  void _downloadTimeTable() async {
-    // Ensure user has exactly five enrolled courses
-    if (enrolledCourses.length < 5) {
+  Future<void> _downloadTimeTable() async {
+    // Ensure user has enrolled courses
+    if (enrolledCourses.isEmpty) {
       showSnackBar(
         context,
-        'You must enroll in 5 courses to view the timetable.',
+        'You must enroll in courses to download the timetable.',
       );
       return;
     }
 
     try {
-      // Generate the timetable PDF using our helper.
-      // (Here, enrolledCourses is used but if the timetable is common, you can also provide a fixed list.)
+      // Generate the timetable PDF
       final pdfData = await generateTimetablePdf(enrolledCourses);
 
-      // Use the printing package to preview or share the PDF.
-      await Printing.layoutPdf(
-        onLayout: (PdfPageFormat format) async => pdfData,
+      // Save the PDF instead of just displaying it
+      final fileName = 'timetable_${DateTime.now().millisecondsSinceEpoch}.pdf';
+
+      // Use printing package to save the file
+      final success = await Printing.sharePdf(
+        bytes: pdfData,
+        filename: fileName,
       );
+
+      if (success) {
+        showSnackBar(context, 'Timetable downloaded successfully!');
+      } else {
+        showSnackBar(context, 'Failed to download timetable');
+      }
     } catch (e) {
-      showSnackBar(context, 'Error getting timetable: $e');
+      showSnackBar(context, 'Error downloading timetable: $e');
     }
   }
 
   /// Builds the complete timetable grid using Flutter's Table widget.
   Widget buildTimetableGrid() {
-    final days = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
-    final times = [
-      '0800',
-      '0900',
-      '1000',
-      '1100',
-      '1200',
-      '1300',
-      '1400',
-      '1500',
-      '1600',
-      '1700',
-      '1800',
+    final days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    final shortDays = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
+    final timeSlots = [
+      '08:00-09:00',
+      '09:00-10:00',
+      '10:00-11:00',
+      '11:00-12:00',
+      '12:00-13:00',
+      '13:00-14:00',
+      '14:00-15:00',
+      '15:00-16:00',
+      '16:00-17:00',
+      '17:00-18:00',
     ];
 
-    // Build a map for the grid.
-    Map<String, Map<String, String>> timetableData = {
-      for (var time in times) time: {for (var day in days) day: ''},
-    };
+    // Show loading indicator while fetching data
+    if (isLoading) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Loading your timetable...'),
+          ],
+        ),
+      );
+    }
 
-    // Debug: Print enrolledCourses to ensure data is being fetched
-    print('Enrolled Courses: $enrolledCourses');
+    // Show empty state if no courses found
+    if (enrolledCourses.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.event_busy, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              'No courses enrolled',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Your timetable will appear here once you enroll in courses',
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
 
-    for (var course in enrolledCourses) {
-      String day = course['day'] ?? '';
-      String startTime = course['startTime'] ?? '';
-      String endTime = course['endTime'] ?? '';
-      String courseInfo =
-          '${course['courseCode'] ?? ''}\n${course['courseName'] ?? ''}\n[${course['venue'] ?? ''}]';
+    // Process the timetable data
+    Map<String, Map<String, dynamic>> timetableData = {};
 
-      // Debug: Print course details
-      print('Processing course: $course');
-
-      // Validate startTime and endTime lengths
-      if (startTime.length < 4 || endTime.length < 4) {
-        print('Invalid time format for course: $course');
-        continue; // Skip this course if times are invalid
+    // Initialize the timetable with empty data
+    for (var timeSlot in timeSlots) {
+      timetableData[timeSlot] = {};
+      for (var day in days) {
+        timetableData[timeSlot]?[day] = null;
       }
+    }
 
-      int startHour = int.tryParse(startTime.substring(0, 2)) ?? 0;
-      int endHour = int.tryParse(endTime.substring(0, 2)) ?? 0;
+    // Helper function to convert 12-hour time format to 24-hour format
+    int convertTo24Hour(String time12h) {
+      // Parse time like "10:00 AM" or "2:00 PM"
+      final parts = time12h.split(':');
+      int hour = int.tryParse(parts[0]) ?? 0;
+      final isPM = time12h.toLowerCase().contains('pm');
 
-      for (int hour = startHour; hour < endHour; hour++) {
-        String key = (hour < 10 ? '0$hour' : '$hour') + '00';
-        if (timetableData.containsKey(key) &&
-            timetableData[key]!.containsKey(day)) {
-          timetableData[key]![day] = courseInfo;
+      // Convert to 24-hour format
+      if (isPM && hour < 12) hour += 12;
+      if (!isPM && hour == 12) hour = 0;
+
+      return hour;
+    }
+
+    // Process each course
+    for (var course in enrolledCourses) {
+      // Each course may have multiple schedule entries
+      final scheduleList = course['schedule'] as List?;
+
+      if (scheduleList == null) continue;
+
+      // Process each schedule entry
+      for (var scheduleItem in scheduleList) {
+        if (scheduleItem is! Map) continue;
+
+        // Extract day
+        final day = scheduleItem['day'] as String?;
+        if (day == null) continue;
+
+        // Find the corresponding short day code
+        int dayIndex = days.indexOf(day);
+        if (dayIndex == -1) continue;
+        final shortDay = shortDays[dayIndex];
+
+        // Extract start and end times
+        final startTimeStr = scheduleItem['startTime'] as String?;
+        final endTimeStr = scheduleItem['endTime'] as String?;
+
+        if (startTimeStr == null || endTimeStr == null) continue;
+
+        // Convert times to 24-hour format
+        final startHour = convertTo24Hour(startTimeStr);
+        final endHour = convertTo24Hour(endTimeStr);
+
+        print(
+          'Course: ${course['courseId']} - Day: $day - Start: $startHour - End: $endHour',
+        );
+
+        // Find matching time slots
+        for (var timeSlot in timeSlots) {
+          // Parse the timeSlot (e.g., "08:00-09:00")
+          final slotHours = timeSlot.split('-');
+          final slotStartHour = int.parse(slotHours[0].split(':')[0]);
+          final slotEndHour = int.parse(slotHours[1].split(':')[0]);
+
+          // If the course time overlaps with this slot
+          if (startHour < slotEndHour && endHour > slotStartHour) {
+            timetableData[timeSlot]?[shortDay] = {
+              'courseId': course['courseId'] ?? 'Unknown',
+              'courseName': course['courseName'] ?? 'Unknown Course',
+              'venue': course['venue'] ?? 'TBA',
+              'lecturerName': course['lecturerName'] ?? 'TBA',
+            };
+          }
         }
       }
     }
@@ -288,56 +423,150 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
     // Debug: Print timetableData to verify grid population
     print('Timetable Data: $timetableData');
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: Table(
-          border: TableBorder.all(width: 0.5, color: Colors.grey),
-          defaultColumnWidth: FixedColumnWidth(120),
-          children: [
-            // Header Row
-            TableRow(
-              decoration: BoxDecoration(color: Colors.grey[300]),
+        scrollDirection: Axis.horizontal,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.vertical,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: EdgeInsets.all(8),
-                  child: Text(
-                    'TIME',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                ...days.map(
-                  (day) => Container(
-                    padding: EdgeInsets.all(8),
-                    child: Text(
-                      day,
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                // Header Row
+                Row(
+                  children: [
+                    Container(
+                      width: 110,
+                      padding: EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        'TIME',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
-                  ),
+                    ...shortDays.map(
+                      (day) => Container(
+                        width: 150,
+                        padding: EdgeInsets.all(8),
+                        margin: EdgeInsets.only(left: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          day,
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+
+                SizedBox(height: 8),
+
+                // Time slots and course data
+                ...timeSlots.map((timeSlot) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Time slot
+                        Container(
+                          width: 110,
+                          height: 100,
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            timeSlot,
+                            style: TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                        ),
+
+                        // Course slots for each day
+                        ...shortDays.map((day) {
+                          final courseInfo = timetableData[timeSlot]?[day];
+                          final bool hasCourse = courseInfo != null;
+
+                          return Container(
+                            width: 150,
+                            height: 100,
+                            margin: EdgeInsets.only(left: 4),
+                            padding: EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color:
+                                  hasCourse
+                                      ? Colors.blue.shade50
+                                      : Colors.white,
+                              border: Border.all(
+                                color:
+                                    hasCourse
+                                        ? Colors.blue.shade200
+                                        : Colors.grey.shade200,
+                              ),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child:
+                                hasCourse
+                                    ? Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          '${courseInfo['courseId']}',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                        SizedBox(height: 2),
+                                        Text(
+                                          '${courseInfo['courseName']}',
+                                          style: TextStyle(fontSize: 11),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        SizedBox(height: 2),
+                                        Text(
+                                          '${courseInfo['venue']}',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                        Text(
+                                          '${courseInfo['lecturerName']}',
+                                          style: TextStyle(fontSize: 10),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    )
+                                    : SizedBox.shrink(),
+                          );
+                        }),
+                      ],
+                    ),
+                  );
+                }),
               ],
             ),
-            // Data Rows
-            ...times.map((time) {
-              return TableRow(
-                children: [
-                  Container(padding: EdgeInsets.all(8), child: Text(time)),
-                  ...days.map((day) {
-                    return Container(
-                      padding: EdgeInsets.all(6),
-                      height: 50,
-                      child: Text(
-                        timetableData[time]![day] ?? '',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 12),
-                      ),
-                    );
-                  }).toList(),
-                ],
-              );
-            }).toList(),
-          ],
+          ),
         ),
       ),
     );
