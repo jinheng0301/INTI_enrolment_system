@@ -172,7 +172,7 @@ class _ManageCourseScreenState extends ConsumerState<ManageCourseScreen> {
                         courseCode: courseCodeController.text,
                         lecturerName: lecturerNameController.text,
                         schedule: timeSlots,
-                        venue: timeSlots.toString(),
+                        venue: venueController.text,
                         availableSeats: int.parse(
                           availableSeatsController.text,
                         ),

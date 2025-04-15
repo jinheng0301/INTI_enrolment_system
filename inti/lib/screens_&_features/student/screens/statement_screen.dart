@@ -343,6 +343,318 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
     );
   }
 
+  void _showEnrollmentHistroyDialog() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    List<Map<String, dynamic>> enrollmentHistory = [];
+    String errorMessage = '';
+
+    try {
+      final userId = widget.uid; // Using the widget's uid directly
+
+      // Fetch drop requests for this student
+      final dropRequestsSnapshot =
+          await FirebaseFirestore.instance
+              .collection('drop_requests')
+              .where('studentId', isEqualTo: userId)
+              .orderBy('requestDate', descending: true)
+              .get();
+
+      // Fetch enrollment data
+      final enrollmentSnapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(userId)
+              .collection('student_course_enrolment')
+              .get();
+
+      // Combine both types of data into a comprehensive history
+      enrollmentHistory = [
+        // Add enrollment data
+        ...enrollmentSnapshot.docs.map((doc) {
+          final data = doc.data();
+          dynamic rawDate = data['enrollmentDate'];
+
+          // Handle both Timestamp and String formats
+          Timestamp date;
+          if (rawDate is Timestamp) {
+            date = rawDate;
+          } else if (rawDate is String) {
+            date = Timestamp.fromDate(DateTime.parse(rawDate));
+          } else {
+            date = Timestamp.now();
+          }
+
+          return {
+            'id': doc.id,
+            'type': 'Enrollment',
+            'courseId': data['courseId'] ?? 'Unknown',
+            'courseName': data['courseName'] ?? 'Unknown Course',
+            'date': date,
+            'status': 'Active',
+          };
+        }),
+
+        // Add drop request data
+        ...dropRequestsSnapshot.docs.map((doc) {
+          final data = doc.data();
+          dynamic rawDate = data['requestDate'];
+
+          // Handle both Timestamp and String formats
+          Timestamp date;
+          if (rawDate is Timestamp) {
+            date = rawDate;
+          } else if (rawDate is String) {
+            date = Timestamp.fromDate(DateTime.parse(rawDate));
+          } else {
+            date = Timestamp.now();
+          }
+
+          return {
+            'id': doc.id,
+            'type': 'Drop Request',
+            'courseId': data['courseId'] ?? 'Unknown',
+            'courseName': data['courseName'] ?? 'Unknown Course',
+            'date': date,
+            'status': data['status'] ?? 'pending',
+            'dropReason': data['dropReason'] ?? 'No reason provided',
+          };
+        }),
+      ];
+
+      // Sort by date (newest first)
+      enrollmentHistory.sort((a, b) {
+        final aDate = a['date'] as Timestamp;
+        final bDate = b['date'] as Timestamp;
+        return bDate.compareTo(aDate);
+      });
+    } catch (e) {
+      print("Error fetching enrollment history: $e");
+      errorMessage = 'Error fetching enrollment history: $e';
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+
+    // Show the enrollment history dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.history, color: Colors.blue),
+              SizedBox(width: 10),
+              Text('Show Enrollment and Add/Drop History'),
+            ],
+          ),
+
+          content: Container(
+            width: double.maxFinite,
+            constraints: BoxConstraints(maxHeight: 400),
+            child:
+                errorMessage.isNotEmpty
+                    ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            color: Colors.red,
+                            size: 48,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            errorMessage,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.red.shade700),
+                          ),
+                        ],
+                      ),
+                    )
+                    : enrollmentHistory.isEmpty
+                    ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            color: Colors.blue,
+                            size: 48,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'No enroll transactions found',
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    )
+                    : Column(
+                      children: [
+                        // Header row
+                        Container(
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            border: Border(
+                              bottom: BorderSide(
+                                color: Colors.grey.shade400,
+                                width: 1,
+                              ),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  'Date',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  'Course',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  'Type',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  'Status',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                  textAlign: TextAlign.right,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // List of enrollment history
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: enrollmentHistory.length,
+                            itemBuilder: (context, index) {
+                              final item = enrollmentHistory[index];
+                              final timestamp = item['date'] as Timestamp?;
+                              final date =
+                                  timestamp != null
+                                      ? DateTime.fromMillisecondsSinceEpoch(
+                                        timestamp.millisecondsSinceEpoch,
+                                      )
+                                      : DateTime.now();
+                              final formattedDate =
+                                  '${date.day}/${date.month}/${date.year}';
+                              final courseId =
+                                  item['courseId'] as String? ?? 'Unknown';
+                              final type = item['type'] as String? ?? 'Unknown';
+                              final status = item['status'] as String? ?? '';
+
+                              // Determine colors based on type and status
+                              Color statusColor;
+                              if (type == 'Enrollment') {
+                                statusColor = Colors.green;
+                              } else if (status == 'approved') {
+                                statusColor = Colors.blue;
+                              } else if (status == 'rejected') {
+                                statusColor = Colors.red;
+                              } else {
+                                statusColor = Colors.orange; // pending
+                              }
+
+                              return Container(
+                                padding: EdgeInsets.symmetric(
+                                  vertical: 12,
+                                  horizontal: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: Colors.grey.shade300,
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      flex: 2,
+                                      child: Text(formattedDate),
+                                    ),
+                                    Expanded(
+                                      flex: 2,
+                                      child: Text(
+                                        '${courseId}\n${item['courseName'] ?? ''}',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      flex: 2,
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            type == 'Enrollment'
+                                                ? Icons.school
+                                                : Icons.delete_outline,
+                                            color:
+                                                type == 'Enrollment'
+                                                    ? Colors.green
+                                                    : Colors.red,
+                                            size: 16,
+                                          ),
+                                          SizedBox(width: 4),
+                                          Text(type),
+                                        ],
+                                      ),
+                                    ),
+                                    Expanded(
+                                      flex: 2,
+                                      child: Text(
+                                        type == 'Enrollment'
+                                            ? 'Active'
+                                            : status,
+                                        style: TextStyle(
+                                          color: statusColor,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        textAlign: TextAlign.right,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+          ),
+
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _showTransactionHistoryDialog() async {
     setState(() {
       isLoading = true;
@@ -690,12 +1002,25 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
                   ),
                 ),
 
-                ElevatedButton(
+                ElevatedButton.icon(
+                  icon: Icon(Icons.school),
+                  onPressed: _showEnrollmentHistroyDialog,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.yellowAccent,
+                  ),
+                  label: Text(
+                    'View Enrollment History',
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ),
+
+                ElevatedButton.icon(
+                  icon: Icon(Icons.payment),
                   onPressed: _showTransactionHistoryDialog,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.redAccent,
                   ),
-                  child: Text(
+                  label: Text(
                     'View Transaction History',
                     style: TextStyle(color: Colors.black),
                   ),

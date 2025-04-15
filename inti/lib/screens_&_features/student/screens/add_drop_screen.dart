@@ -146,20 +146,21 @@ class _AddDropScreenState extends ConsumerState<AddDropScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Drop $courseName reason dialog'),
+          title: Text('Give your reason for dropping $courseName'),
           content: Form(
             key: _formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text('Give a suitable reason for your drop course'),
+                SizedBox(height: 10),
                 TextFormField(
                   controller: dropReasonController,
                   decoration: InputDecoration(
                     labelText: 'Enter your reason for dropping...',
                     border: OutlineInputBorder(),
                   ),
-                  maxLines: 4,
+                  maxLines: 1,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter the drop reason';
@@ -348,6 +349,16 @@ class _AddDropScreenState extends ConsumerState<AddDropScreen> {
     try {
       setState(() => isLoading = true);
 
+      // Check for schedule clashes before enrolling
+      final clashInfo = await _checkScheduleClash(course);
+
+      if (clashInfo != null) {
+        // Show clash dialog and return early
+        _showClashDialog(clashInfo, course);
+        setState(() => isLoading = false);
+        return;
+      }
+
       await ref
           .read(courseEnrolmentControllerProvider)
           .enrollInCourse(
@@ -399,6 +410,298 @@ class _AddDropScreenState extends ConsumerState<AddDropScreen> {
     } finally {
       setState(() => isLoading = false);
     }
+  }
+  // First, add these helper functions from CourseEnrolmentScreen to AddDropScreen
+
+  // Helper function to check if two time slots overlap
+  bool _doTimeSlotsOverlap(
+    Map<String, dynamic> slot1,
+    Map<String, dynamic> slot2,
+  ) {
+    // First check if the days match
+    if (slot1['day'] != slot2['day']) {
+      return false; // Different days, no overlap
+    }
+
+    // Parse time strings to comparable format
+    int slot1Start = _timeStringToMinutes(slot1['startTime']);
+    int slot1End = _timeStringToMinutes(slot1['endTime']);
+    int slot2Start = _timeStringToMinutes(slot2['startTime']);
+    int slot2End = _timeStringToMinutes(slot2['endTime']);
+
+    // Check if time periods overlap
+    return (slot1Start < slot2End && slot1End > slot2Start);
+  }
+
+  // Helper function to convert time strings to minutes from midnight
+  int _timeStringToMinutes(String timeStr) {
+    // Check format - could be "2:00 PM" or "14:00"
+    bool isPM = timeStr.toLowerCase().contains('pm');
+    String timeDigits = timeStr.replaceAll(RegExp(r'[^\d:]'), '');
+    List<String> parts = timeDigits.split(':');
+
+    int hours = int.parse(parts[0]);
+    int minutes = parts.length > 1 ? int.parse(parts[1]) : 0;
+
+    // Convert to 24-hour format
+    if (isPM && hours < 12) hours += 12;
+    if (!isPM && hours == 12) hours = 0;
+
+    return hours * 60 + minutes;
+  }
+
+  // Function to check if a course's schedule clashes with enrolled courses
+  Future<Map<String, dynamic>?> _checkScheduleClash(
+    Map<String, dynamic> newCourse,
+  ) async {
+    // Get all enrolled courses for the student
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(widget.uid)
+              .collection('student_course_enrolment')
+              .get();
+
+      List<Map<String, dynamic>> enrolledCourses = [];
+      for (var doc in snapshot.docs) {
+        enrolledCourses.add(doc.data());
+      }
+
+      // Check for schedule clashes
+      List<Map<String, dynamic>> newCourseSlots = [];
+
+      // Parse new course schedule
+      if (newCourse['schedule'] is List) {
+        newCourseSlots = List<Map<String, dynamic>>.from(newCourse['schedule']);
+      } else {
+        // Parse from string format if needed
+        try {
+          String scheduleStr = newCourse['schedule'].toString();
+          if (scheduleStr.contains('day:') &&
+              scheduleStr.contains('startTime:')) {
+            RegExp dayRegex = RegExp(r'day: ([a-zA-Z]+)');
+            RegExp startTimeRegex = RegExp(r'startTime: ([0-9:APM ]+)');
+            RegExp endTimeRegex = RegExp(r'endTime: ([0-9:APM ]+)');
+
+            var dayMatch = dayRegex.firstMatch(scheduleStr);
+            var startMatch = startTimeRegex.firstMatch(scheduleStr);
+            var endMatch = endTimeRegex.firstMatch(scheduleStr);
+
+            if (dayMatch != null && startMatch != null && endMatch != null) {
+              newCourseSlots.add({
+                'day': dayMatch.group(1),
+                'startTime': startMatch.group(1),
+                'endTime': endMatch.group(1),
+              });
+            }
+          }
+        } catch (e) {
+          print("Error parsing schedule: $e");
+        }
+      }
+
+      // Check each enrolled course for schedule clashes
+      for (var enrolledCourse in enrolledCourses) {
+        String enrolledCourseId = enrolledCourse['courseId'];
+
+        // Skip checking against courses that are being dropped
+        if (enrolledDropRequests.contains(enrolledCourseId)) {
+          continue;
+        }
+
+        // Get the schedule for enrolled course
+        List<Map<String, dynamic>> enrolledCourseSlots = [];
+
+        // Get the schedule from Firestore for this enrolled course
+        var courseDoc =
+            await FirebaseFirestore.instance
+                .collection('admin_add_courses')
+                .where('courseCode', isEqualTo: enrolledCourseId)
+                .get();
+
+        if (courseDoc.docs.isNotEmpty) {
+          var courseData = courseDoc.docs.first.data();
+
+          // Parse enrolled course schedule similar to new course
+          if (courseData['schedule'] is List) {
+            enrolledCourseSlots = List<Map<String, dynamic>>.from(
+              courseData['schedule'],
+            );
+          } else {
+            // Similar parsing logic as above for string schedules
+            try {
+              String scheduleStr = courseData['schedule'].toString();
+              if (scheduleStr.contains('day:') &&
+                  scheduleStr.contains('startTime:')) {
+                RegExp dayRegex = RegExp(r'day: ([a-zA-Z]+)');
+                RegExp startTimeRegex = RegExp(r'startTime: ([0-9:APM ]+)');
+                RegExp endTimeRegex = RegExp(r'endTime: ([0-9:APM ]+)');
+
+                var dayMatch = dayRegex.firstMatch(scheduleStr);
+                var startMatch = startTimeRegex.firstMatch(scheduleStr);
+                var endMatch = endTimeRegex.firstMatch(scheduleStr);
+
+                if (dayMatch != null &&
+                    startMatch != null &&
+                    endMatch != null) {
+                  enrolledCourseSlots.add({
+                    'day': dayMatch.group(1),
+                    'startTime': startMatch.group(1),
+                    'endTime': endMatch.group(1),
+                  });
+                }
+              }
+            } catch (e) {
+              print("Error parsing schedule: $e");
+            }
+          }
+
+          // Now check for clashes between new course slots and enrolled course slots
+          for (var newSlot in newCourseSlots) {
+            for (var enrolledSlot in enrolledCourseSlots) {
+              if (_doTimeSlotsOverlap(newSlot, enrolledSlot)) {
+                // Found a clash
+                return {
+                  'clashWith': enrolledCourse,
+                  'courseData': courseData,
+                  'clashSlot': enrolledSlot,
+                  'newSlot': newSlot,
+                };
+              }
+            }
+          }
+        }
+      }
+
+      // No clashes found
+      return null;
+    } catch (e) {
+      print("Error checking schedule clash: $e");
+      return null;
+    }
+  }
+
+  // Function to show clash dialog
+  void _showClashDialog(
+    Map<String, dynamic> clashInfo,
+    Map<String, dynamic> newCourse,
+  ) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Schedule Clash Detected'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'The course you are trying to add clashes with another course:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'New Course: ${newCourse['courseName']} (${newCourse['courseCode']})',
+                ),
+                Text(
+                  'Clash With: ${clashInfo['courseData']['courseName']} (${clashInfo['courseData']['courseCode']})',
+                ),
+                SizedBox(height: 10),
+                Text('Clash Details:'),
+                Text('Day: ${clashInfo['clashSlot']['day']}'),
+                Text(
+                  'New Course Time: ${clashInfo['newSlot']['startTime']} - ${clashInfo['newSlot']['endTime']}',
+                ),
+                Text(
+                  'Enrolled Course Time: ${clashInfo['clashSlot']['startTime']} - ${clashInfo['clashSlot']['endTime']}',
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'You cannot enroll in both courses due to the schedule conflict.',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                // Option to drop currently enrolled course and enroll in new one
+                Navigator.of(context).pop();
+                _showConfirmSwapDialog(clashInfo, newCourse);
+              },
+              child: Text('Swap Courses'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Function to confirm swapping courses
+  void _showConfirmSwapDialog(
+    Map<String, dynamic> clashInfo,
+    Map<String, dynamic> newCourse,
+  ) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirm Course Swap'),
+          content: Text(
+            'Are you sure you want to drop ${clashInfo['courseData']['courseName']} and enroll in ${newCourse['courseName']}?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                // Implement the course swap logic
+                try {
+                  // First drop the clashing course
+                  await FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(widget.uid)
+                      .collection('student_course_enrolment')
+                      .where(
+                        'courseId',
+                        isEqualTo: clashInfo['clashWith']['courseId'],
+                      )
+                      .get()
+                      .then((snapshot) {
+                        for (var doc in snapshot.docs) {
+                          doc.reference.delete();
+                        }
+                      });
+
+                  // Then enroll in the new course
+                  await _enrollInCourse(newCourse);
+
+                  Navigator.of(context).pop();
+                  showSnackBar(context, 'Successfully swapped courses!');
+                } catch (e) {
+                  print("Error during course swap: $e");
+                  showSnackBar(context, 'Failed to swap courses: $e');
+                }
+              },
+              child: Text('Confirm Swap'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
