@@ -219,6 +219,13 @@ class _AddDropScreenState extends ConsumerState<AddDropScreen> {
   }
 
   Future<void> _showAddCourseDialog() async {
+    if (enrolledCourses.length >= 5) {
+      showSnackBar(
+        context,
+        '❌ You\'ve already enrolled in 5 courses, which is the maximum allowed.',
+      );
+    }
+
     // Fetch available courses (excluding already enrolled courses)
     List<Map<String, dynamic>> availableCourses = [];
 
@@ -248,98 +255,145 @@ class _AddDropScreenState extends ConsumerState<AddDropScreen> {
     return showDialog(
       context: context,
       builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Container(
-            width: MediaQuery.of(context).size.width * 0.8,
-            height: MediaQuery.of(context).size.height * 0.6,
-            padding: EdgeInsets.all(20),
-            child: Column(
-              children: [
-                Text(
-                  'Available Courses',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 15),
-                Text(
-                  'You have dropped a course, so you can add a new one.',
-                  style: TextStyle(fontSize: 14, color: Colors.green),
-                ),
+        // Add this to track which course is being enrolled
+        bool isEnrolling = false;
+        String enrollingCourseId = '';
 
-                SizedBox(height: 20),
+        // Use StatefulBuilder to update dialog state
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.8,
+                height: MediaQuery.of(context).size.height * 0.6,
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Text(
+                      'Available Courses',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
 
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: availableCourses.length,
-                    itemBuilder: (context, index) {
-                      final course = availableCourses[index];
+                    SizedBox(height: 15),
 
-                      return Container(
-                        margin: EdgeInsets.only(bottom: 15),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: Colors.grey.shade300,
-                            width: 1.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.3),
-                              blurRadius: 5,
-                              offset: Offset(2, 2),
-                            ),
-                          ],
-                        ),
-                        child: ListTile(
-                          contentPadding: EdgeInsets.all(15),
-                          title: Text(
-                            course['courseCode'] ?? 'Unknown',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(course['courseName'] ?? 'Unknown Course'),
+                    Text(
+                      'You have dropped a course, so you can add a new one.',
+                      style: TextStyle(fontSize: 14, color: Colors.green),
+                    ),
 
-                              Text(
-                                'Lecturer: ${course['lecturerName'] ?? 'TBA'}',
+                    SizedBox(height: 15),
+
+                    Text(
+                      'Current courses: ${enrolledCourses.length} / 5 (Maximum: 5 Course)',
+                      style: TextStyle(fontSize: 14, color: Colors.green),
+                    ),
+
+                    SizedBox(height: 20),
+
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: availableCourses.length,
+                        itemBuilder: (context, index) {
+                          final course = availableCourses[index];
+                          final courseId = course['courseCode'];
+                          // Disable button if already at max or if this specific button is enrolling
+                          final bool isDisabled =
+                              enrolledCourses.length >= 5 ||
+                              (isEnrolling && enrollingCourseId == courseId);
+
+                          return Container(
+                            margin: EdgeInsets.only(bottom: 15),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: Colors.grey.shade300,
+                                width: 1.5,
                               ),
-
-                              Text(
-                                'Credits: ${course['creditHours']?.toString() ?? '0'}',
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.3),
+                                  blurRadius: 5,
+                                  offset: Offset(2, 2),
+                                ),
+                              ],
+                            ),
+                            child: ListTile(
+                              contentPadding: EdgeInsets.all(15),
+                              title: Text(
+                                course['courseCode'] ?? 'Unknown',
+                                style: TextStyle(fontWeight: FontWeight.bold),
                               ),
-                            ],
-                          ),
-                          trailing: ElevatedButton(
-                            onPressed: () => _enrollInCourse(course),
-                            style: ButtonStyle(
-                              backgroundColor: WidgetStateProperty.all(
-                                Colors.green,
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    course['courseName'] ?? 'Unknown Course',
+                                  ),
+
+                                  Text(
+                                    'Lecturer: ${course['lecturerName'] ?? 'TBA'}',
+                                  ),
+
+                                  Text(
+                                    'Credits: ${course['creditHours']?.toString() ?? '0'}',
+                                  ),
+                                ],
+                              ),
+                              trailing: ElevatedButton(
+                                onPressed:
+                                    isDisabled
+                                        ? null // Disable button
+                                        : () async {
+                                          // Set enrolling state
+                                          setState(() {
+                                            isEnrolling = true;
+                                            enrollingCourseId = courseId;
+                                          });
+
+                                          await _enrollInCourse(course);
+
+                                          // Reset state
+                                          setState(() {
+                                            isEnrolling = false;
+                                            enrollingCourseId = '';
+                                          });
+                                        },
+                                style: ButtonStyle(
+                                  backgroundColor: WidgetStateProperty.all(
+                                    isDisabled ? Colors.grey : Colors.green,
+                                  ),
+                                ),
+                                child: Text(
+                                  isEnrolling && enrollingCourseId == courseId
+                                      ? 'Adding...'
+                                      : 'Add',
+                                  style: TextStyle(color: Colors.white),
+                                ),
                               ),
                             ),
-                            child: Text(
-                              'Add',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
+                          );
+                        },
+                      ),
+                    ),
 
-                SizedBox(height: 10),
+                    SizedBox(height: 10),
 
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text('Close'),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text('Close'),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
@@ -347,7 +401,29 @@ class _AddDropScreenState extends ConsumerState<AddDropScreen> {
 
   Future<void> _enrollInCourse(Map<String, dynamic> course) async {
     try {
-      setState(() => isLoading = true);
+      setState(() {
+        isLoading = true;
+      });
+
+      // Fetch fresh count of enrolled courses to verify
+      final currentCount = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.uid)
+          .collection('student_course_enrolment')
+          .get()
+          .then((snap) => snap.docs.length);
+
+      if (currentCount >= 5) {
+        showSnackBar(
+          context,
+          '❌ Cannot enroll: Maximum course limit (5) reached.',
+        );
+        setState(() {
+          isLoading = false;
+        });
+
+        return;
+      }
 
       // Check for schedule clashes before enrolling
       final clashInfo = await _checkScheduleClash(course);
@@ -752,18 +828,42 @@ class _AddDropScreenState extends ConsumerState<AddDropScreen> {
           // ADD NEW COURSE BUTTON
           // Only show if user has an approved drop request and less than 5 courses
           ElevatedButton(
-            onPressed: canAddCourse ? _showAddCourseDialog : null,
+            onPressed:
+                canAddCourse && enrolledCourses.length < 5
+                    ? _showAddCourseDialog
+                    : null,
             style: ButtonStyle(
               backgroundColor: WidgetStateProperty.all(
-                canAddCourse ? Colors.yellow : Colors.grey,
+                canAddCourse && enrolledCourses.length < 5
+                    ? Colors.yellow
+                    : Colors.greenAccent,
               ),
             ),
-            child: Text(
-              'Add new course',
-              style: TextStyle(
-                color: Colors.blueAccent,
-                fontWeight: FontWeight.w300,
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  enrolledCourses.length >= 5
+                      ? 'Maximum courses reached'
+                      : 'Add new course',
+                  style: TextStyle(
+                    color:
+                        enrolledCourses.length >= 5
+                            ? Colors.red
+                            : Colors.blueAccent,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w300,
+                  ),
+                ),
+                Text(
+                  '${enrolledCourses.length} / 5 courses',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color:
+                        enrolledCourses.length >= 5 ? Colors.red : Colors.blue,
+                  ),
+                ),
+              ],
             ),
           ),
 
