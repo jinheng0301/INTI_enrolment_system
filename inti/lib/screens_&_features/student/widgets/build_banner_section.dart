@@ -33,7 +33,7 @@ class BuildBannerSection extends StatelessWidget {
                 ).createShader(rect);
               },
               blendMode: BlendMode.lighten,
-              child: Image.asset('images/falcon_heavy.jpg', fit: BoxFit.cover),
+              child: Image.asset('images/f22_burning.jpg', fit: BoxFit.cover),
             ),
           ),
 

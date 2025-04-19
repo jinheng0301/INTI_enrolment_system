@@ -8,6 +8,7 @@ import 'package:inti/common/utils/utils.dart';
 import 'package:inti/common/widgets/drawer_list.dart';
 import 'package:inti/common/widgets/error.dart';
 import 'package:inti/common/widgets/loader.dart';
+import 'package:inti/screens_&_features/auth/controller/auth_controller.dart';
 import 'package:inti/screens_&_features/student/controller/payment_controller.dart';
 
 class AccountManagementScreen extends ConsumerStatefulWidget {
@@ -305,6 +306,119 @@ class _AccountManagementScreenState
     );
   }
 
+  void _showChangePasswordDialog() {
+    final TextEditingController existingPasswordController =
+        TextEditingController();
+    final TextEditingController newPasswordController = TextEditingController();
+    final TextEditingController confirmNewPasswordController =
+        TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Change Password'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Password must be between 6 to 20 alphanumeric characters.'),
+
+              Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(height: 12),
+
+                    TextFormField(
+                      controller: existingPasswordController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        label: Text('Existing Password'),
+                        border: OutlineInputBorder(),
+                      ),
+                      validator:
+                          (value) =>
+                              value?.isEmpty ?? true ? 'Required field' : null,
+                    ),
+
+                    SizedBox(height: 12),
+
+                    TextFormField(
+                      controller: newPasswordController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        label: Text('New Password'),
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Required field';
+                        }
+                        if (value.length < 6) return 'Minimum 6 characters';
+                        return null;
+                      },
+                    ),
+
+                    SizedBox(height: 12),
+
+                    TextFormField(
+                      controller: confirmNewPasswordController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        label: Text('Confirm New Password'),
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Required field';
+                        }
+                        if (value != newPasswordController.text) {
+                          return 'Passwords do not match';
+                        }
+
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel'),
+            ),
+
+            TextButton(
+              onPressed: () async {
+                if (formKey.currentState!.validate()) {
+                  try {
+                    await ref
+                        .read(authControllerProvider)
+                        .changePassword(
+                          currentPassword: existingPasswordController.text,
+                          newPassword: newPasswordController.text,
+                          context: context,
+                        );
+                    Navigator.pop(context);
+                    showSnackBar(context, 'Password changed successfully');
+                  } catch (e) {
+                    print('Change password failed: $e');
+                    showSnackBar(context, 'Change password failed: $e');
+                  }
+                }
+              },
+              child: Text('Save Changes'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final paymentAsync = ref.watch(updateDetailsStreamProvider);
@@ -366,6 +480,15 @@ class _AccountManagementScreenState
                           color: textColor,
                         ),
                       ),
+
+                      SizedBox(height: 10),
+
+                      ElevatedButton.icon(
+                        icon: Icon(Icons.password),
+                        onPressed: _showChangePasswordDialog,
+                        label: Text('Update password'),
+                      ),
+
                       SizedBox(height: 50),
 
                       Expanded(
@@ -410,10 +533,14 @@ class _AccountManagementScreenState
                                       DataColumn(label: Text('Country')),
                                       DataColumn(label: Text('Postcode')),
                                       DataColumn(
-                                        label: Text('Account Balance'),
+                                        label: Expanded(
+                                          child: Text('Account Balance'),
+                                        ),
                                       ),
                                       DataColumn(
-                                        label: Text('Emergency Contact Name'),
+                                        label: Expanded(
+                                          child: Text('Emergency Contact Name'),
+                                        ),
                                       ),
                                       DataColumn(label: Text('Edit Button')),
                                     ],

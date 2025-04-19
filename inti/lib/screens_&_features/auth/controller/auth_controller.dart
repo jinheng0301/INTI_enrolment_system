@@ -63,6 +63,18 @@ class AuthController {
     );
   }
 
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required BuildContext context,
+  }) async {
+    await authRepository.changePassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+      context: context,
+    );
+  }
+
   Future<void> signOut({required BuildContext context}) async {
     return await authRepository.signOut(context: context);
   }

@@ -71,6 +71,8 @@ class _StudentHomeScreenState extends ConsumerState<StudentHomeScreen> {
           _userData = userSnap.data()!;
         });
       }
+
+      print('User data fetched: $_userData');
     } catch (e) {
       showSnackBar(context, 'Error fetching user data: ${e.toString()}');
     }
@@ -88,6 +90,8 @@ class _StudentHomeScreenState extends ConsumerState<StudentHomeScreen> {
       setState(() {
         _enrolledCourses = coursesSnap.docs.map((doc) => doc.data()).toList();
       });
+
+      print('Enrolled courses: $_enrolledCourses');
     } catch (e) {
       showSnackBar(context, 'Error fetching courses: ${e.toString()}');
     }
@@ -159,7 +163,7 @@ class _StudentHomeScreenState extends ConsumerState<StudentHomeScreen> {
                     children: [
                       // BANNER AND TITLE
                       BuildBannerSection(
-                        height: height * .6,
+                        height: height * .7,
                         title:
                             _userData.isNotEmpty &&
                                     _userData['username'] != null

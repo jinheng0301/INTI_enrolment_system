@@ -152,6 +152,39 @@ class AuthRepository {
     }
   }
 
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required BuildContext context,
+  }) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw Exception('User not authenticated');
+
+      // Re-authenticate user
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+      await user.reauthenticateWithCredential(credential);
+
+      // Update password
+      await user.updatePassword(newPassword);
+
+      showSnackBar(context, 'Password changed successfully');
+    } on FirebaseAuthException catch (e) {
+      String message = 'Password change failed';
+      if (e.code == 'wrong-password') {
+        message = 'Incorrect current password';
+      } else if (e.code == 'weak-password') {
+        message = 'New password is too weak';
+      }
+      showSnackBar(context, message);
+    } catch (e) {
+      showSnackBar(context, 'Error changing password: $e');
+    }
+  }
+
   Future<void> signOut({required BuildContext context}) async {
     try {
       await auth.signOut();
