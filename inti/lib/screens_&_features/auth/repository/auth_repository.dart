@@ -21,7 +21,6 @@ final authRepositoryProvider = Provider(
 class AuthRepository {
   final FirebaseAuth auth;
   final FirebaseFirestore firestore;
-  var firebaseAuth = FirebaseAuth.instance.currentUser?.uid;
 
   AuthRepository({required this.auth, required this.firestore});
 
@@ -111,10 +110,15 @@ class AuthRepository {
     required String password,
   }) async {
     try {
-      await auth.signInWithEmailAndPassword(email: email, password: password);
+      UserCredential userCredential = await auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
-      DocumentSnapshot doc =
-          await firestore.collection('users').doc(auth.currentUser!.uid).get();
+      // After successful sign-in, get the user ID
+      String uid = userCredential.user!.uid;
+
+      DocumentSnapshot doc = await firestore.collection('users').doc(uid).get();
 
       if (!doc.exists) {
         showSnackBar(context, 'User data not found in Firestore');
@@ -122,32 +126,28 @@ class AuthRepository {
       }
       String role = doc['role'];
 
+      if (!doc.exists) {
+        showSnackBar(context, 'User data not found in Firestore');
+        return;
+      }
+
       if (role == 'student') {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(
-            builder:
-                (context) => StudentHomeScreen(uid: firebaseAuth.toString()),
-          ),
+          MaterialPageRoute(builder: (context) => StudentHomeScreen(uid: uid)),
           (route) => false,
         );
       } else if (role == 'admin') {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(
-            builder: (context) => AdminHomeScreen(uid: firebaseAuth.toString()),
-          ),
+          MaterialPageRoute(builder: (context) => AdminHomeScreen(uid: uid)),
           (route) => false,
         );
       }
 
-      // showSnackBar(
-      //   context,
-      //   'Signed in to $fetchUsername\'s account successfully',
-      // );
-
       showSnackBar(context, 'Signed in successfully');
     } catch (e) {
+      print('Error message: $e');
       showSnackBar(context, e.toString());
     }
   }

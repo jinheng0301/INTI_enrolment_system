@@ -76,6 +76,8 @@ flutter:
     - images/amg_s63.jpg
     - images/civic_typer.jpg
     - images/m3p.jpg
+    - images/crew_dragon.png
+    - images/falcon_heavy.jpg
    
 
   # An image asset can refer to one or more resolution-specific "variants", see

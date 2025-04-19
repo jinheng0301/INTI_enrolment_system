@@ -56,62 +56,64 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
   Widget courseSummary(String title, Future<int> quantityFuture) {
     final height = MediaQuery.of(context).size.height;
 
-    return Padding(
-      padding: const EdgeInsets.all(25),
-      child: Container(
-        height: height * .2,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: Colors.grey.shade300,
-            width: 1.5, // Border width
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.3), // Shadow color
-              blurRadius: 5, // Blur radius
-              offset: Offset(2, 2), // Shadow offset
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.all(25),
+        child: Container(
+          height: height * .3,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: Colors.grey.shade300,
+              width: 1.5, // Border width
             ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                  color: textColor,
-                ),
-              ),
-
-              SizedBox(height: 10),
-
-              // must be a dynamic data
-              FutureBuilder(
-                future: quantityFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Loader();
-                  } else if (snapshot.hasError) {
-                    return ErrorScreen(error: snapshot.error.toString());
-                  } else {
-                    return Text(
-                      snapshot.data.toString(),
-                      style: TextStyle(
-                        fontWeight: FontWeight.w300,
-                        fontSize: 15,
-                        color: textColor,
-                      ),
-                    );
-                  }
-                },
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.3), // Shadow color
+                blurRadius: 5, // Blur radius
+                offset: Offset(2, 2), // Shadow offset
               ),
             ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                    color: textColor,
+                  ),
+                ),
+
+                SizedBox(height: 10),
+
+                // must be a dynamic data
+                FutureBuilder(
+                  future: quantityFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Loader();
+                    } else if (snapshot.hasError) {
+                      return ErrorScreen(error: snapshot.error.toString());
+                    } else {
+                      return Text(
+                        snapshot.data.toString(),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w300,
+                          fontSize: 15,
+                          color: textColor,
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -295,8 +297,14 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 courseSummary('Total Course(s)', getTotalCourses()),
-                courseSummary('Pending drop request(s)', getTotalDropRequests()),
-                courseSummary('Payment pending request(s)', getTotalPaymentRequests()),
+                courseSummary(
+                  'Pending drop request(s)',
+                  getTotalDropRequests(),
+                ),
+                courseSummary(
+                  'Payment pending request(s)',
+                  getTotalPaymentRequests(),
+                ),
                 courseSummary('Total Student(s)', getTotalStudents()),
                 courseSummary('Total Admin(s)', getTotalAdmins()),
               ],

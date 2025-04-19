@@ -12,7 +12,7 @@ import 'package:inti/screens_&_features/student/widgets/course_container.dart';
 import 'package:intl/intl.dart';
 
 class CourseEnrolmentScreen extends ConsumerStatefulWidget {
-  static const routeName = '/course-enrolment-screen';
+  static const routeName = '/course-enrollment-screen';
   final String uid;
 
   CourseEnrolmentScreen({required this.uid});
