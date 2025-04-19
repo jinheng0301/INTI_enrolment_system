@@ -135,7 +135,7 @@ class _DrawerListState extends ConsumerState<DrawerList> {
           if (userRole == 'student') ...[
             ListTile(
               onTap: () {
-                Navigator.pushNamed(context, '/course-enrolment-screen');
+                Navigator.pushNamed(context, '/course-enrollment-screen');
               },
               leading: Icon(Icons.school),
               title: Text('Course Enrollment'),
