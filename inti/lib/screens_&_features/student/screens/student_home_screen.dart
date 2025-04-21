@@ -163,13 +163,14 @@ class _StudentHomeScreenState extends ConsumerState<StudentHomeScreen> {
                     children: [
                       // BANNER AND TITLE
                       BuildBannerSection(
-                        height: height * .7,
+                        height: height * .8,
                         title:
                             _userData.isNotEmpty &&
                                     _userData['username'] != null
                                 ? 'Welcome back, ${_userData['username']}'
                                 : 'Welcome, Student',
-                        subtitle: _userData['programme'] ?? 'Not Specified',
+                        subtitle1: _userData['programme'] ?? 'BCSI',
+                        subtitle2: _userData['semester'] ?? 'JAN2025',
                       ),
 
                       SizedBox(height: 30),

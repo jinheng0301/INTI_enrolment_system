@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 class BuildBannerSection extends StatelessWidget {
   final double height;
   final String title;
-  final String subtitle;
+  final String subtitle1;
+  final String subtitle2;
 
   BuildBannerSection({
     required this.height,
     required this.title,
-    required this.subtitle,
+    required this.subtitle1,
+    required this.subtitle2,
   });
 
   @override
@@ -81,7 +83,7 @@ class BuildBannerSection extends StatelessWidget {
                           text: 'Programme: ',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        TextSpan(text: subtitle),
+                        TextSpan(text: subtitle1),
                       ],
                     ),
                   ),
@@ -104,7 +106,7 @@ class BuildBannerSection extends StatelessWidget {
                           text: 'Semester: ',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        TextSpan(text: subtitle),
+                        TextSpan(text: subtitle2),
                       ],
                     ),
                   ),
