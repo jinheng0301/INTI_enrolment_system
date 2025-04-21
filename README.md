@@ -3,7 +3,6 @@ Here are the screens below:
 
 Home screen: 
 ![image](https://github.com/user-attachments/assets/91aa1a45-0389-4f97-9f38-5f4b0af5cb84)
-![image](https://github.com/user-attachments/assets/726d4f64-c70c-4079-a621-62d14f901f87)
 
 Course enrollment screen:
 ![image](https://github.com/user-attachments/assets/c3fdd0d6-f048-4661-8c91-449176b33b4e)
