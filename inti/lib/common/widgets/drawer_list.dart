@@ -93,7 +93,7 @@ class _DrawerListState extends ConsumerState<DrawerList> {
       child: ListView(
         children: [
           SizedBox(
-            height: height * 0.3,
+            height: height * .35,
             child: DrawerHeader(
               decoration: BoxDecoration(color: Colors.greenAccent),
               child: Column(

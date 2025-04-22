@@ -5,8 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inti/common/utils/color.dart';
 import 'package:inti/common/utils/utils.dart';
 import 'package:inti/common/widgets/drawer_list.dart';
-import 'package:inti/common/widgets/error.dart';
-import 'package:inti/common/widgets/loader.dart';
+import 'package:inti/screens_&_features/admin/widgets/build_quick_action_tile.dart';
+import 'package:inti/screens_&_features/admin/widgets/course_summary.dart';
+import 'package:intl/intl.dart';
 
 class AdminHomeScreen extends ConsumerStatefulWidget {
   static const routeName = '/admin-home-screen';
@@ -23,12 +24,14 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
   var firebaseAuth = FirebaseAuth.instance.currentUser?.uid;
   var userData = {};
   bool isLoading = false;
+  String greeting = 'Good morning';
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     getData();
+    _setGreeting();
   }
 
   void getData() async {
@@ -53,69 +56,105 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
     });
   }
 
-  Widget courseSummary(String title, Future<int> quantityFuture) {
-    final height = MediaQuery.of(context).size.height;
+  void _setGreeting() {
+    final hour = DateTime.now().hour;
 
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.all(25),
-        child: Container(
-          height: height * .3,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: Colors.grey.shade300,
-              width: 1.5, // Border width
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.3), // Shadow color
-                blurRadius: 5, // Blur radius
-                offset: Offset(2, 2), // Shadow offset
+    if (hour < 12) {
+      greeting = 'Good morning';
+    } else if (hour < 17) {
+      greeting = 'Good afternoon';
+    } else {
+      greeting = 'Good night';
+    }
+  }
+
+  Widget welcomeHeader() {
+    return Container(
+      margin: const EdgeInsets.all(25),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [tabColor, tabColor.withOpacity(0.8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: tabColor.withOpacity(0.4),
+            blurRadius: 8,
+            spreadRadius: 1,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    greeting,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    userData.isNotEmpty && userData['username'] != null
+                        ? 'Mr. ${userData['username']} Admin'
+                        : 'Administrator',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.admin_panel_settings,
+                  color: Colors.white,
+                  size: 32,
+                ),
               ),
             ],
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
+                const Icon(Icons.calendar_today, color: Colors.white, size: 18),
+                const SizedBox(width: 8),
                 Text(
-                  title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                    color: textColor,
+                  DateFormat('EEEE, MMM d, yyyy').format(DateTime.now()),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
                   ),
-                ),
-
-                SizedBox(height: 10),
-
-                // must be a dynamic data
-                FutureBuilder(
-                  future: quantityFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Loader();
-                    } else if (snapshot.hasError) {
-                      return ErrorScreen(error: snapshot.error.toString());
-                    } else {
-                      return Text(
-                        snapshot.data.toString(),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w300,
-                          fontSize: 15,
-                          color: textColor,
-                        ),
-                      );
-                    }
-                  },
                 ),
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -213,6 +252,7 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
+    final width = MediaQuery.of(context).size.width;
 
     return Scaffold(
       key: _scaffoldKey,
@@ -290,24 +330,125 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
               ),
             ),
 
-            SizedBox(height: 20),
+            welcomeHeader(),
 
             // SUMMARY OF COURSE DETAILS
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                courseSummary('Total Course(s)', getTotalCourses()),
-                courseSummary(
-                  'Pending drop request(s)',
-                  getTotalDropRequests(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 25),
+              child: Wrap(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      courseSummary(
+                        title: 'Total Course(s)',
+                        quantityFuture: getTotalCourses(),
+                        icon: Icons.book,
+                        color: Colors.blue,
+                      ),
+                      courseSummary(
+                        title: 'Pending drop request(s)',
+                        quantityFuture: getTotalDropRequests(),
+                        icon: Icons.assignment_late,
+                        color: Colors.orange,
+                      ),
+                      courseSummary(
+                        title: 'Payment pending request(s)',
+                        quantityFuture: getTotalPaymentRequests(),
+                        icon: Icons.payment,
+                        color: Colors.green,
+                      ),
+                      courseSummary(
+                        title: 'Total Student(s)',
+                        quantityFuture: getTotalStudents(),
+                        icon: Icons.school,
+                        color: Colors.purple,
+                      ),
+                      courseSummary(
+                        title: 'Total Admin(s)',
+                        quantityFuture: getTotalAdmins(),
+                        icon: Icons.admin_panel_settings,
+                        color: Colors.red,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // QUCIK ACTIONS SECTION
+            Padding(
+              padding: EdgeInsets.all(10),
+              child: Text(
+                'Quick Actions',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
                 ),
-                courseSummary(
-                  'Payment pending request(s)',
-                  getTotalPaymentRequests(),
+              ),
+            ),
+
+            Padding(
+              padding: EdgeInsets.all(25),
+              child: Container(
+                width: width * .6,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.1),
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                courseSummary('Total Student(s)', getTotalStudents()),
-                courseSummary('Total Admin(s)', getTotalAdmins()),
-              ],
+                child: Column(
+                  children: [
+                    buildQuickActionTile(
+                      color: Colors.blue,
+                      icon: Icons.edit_note,
+                      subtitle: 'Add or modify course details',
+                      title: 'Manage Courses',
+                      onTap:
+                          () => Navigator.pushNamed(
+                            context,
+                            '/manage-course-screen',
+                          ),
+                    ),
+                    buildQuickActionTile(
+                      color: Colors.orange,
+                      icon: Icons.rule_folder,
+                      subtitle: 'Approve or reject student requests',
+                      title: 'Review Drop Requests',
+                      onTap:
+                          () => Navigator.pushNamed(
+                            context,
+                            '/student-enrolment-management-screen',
+                          ),
+                    ),
+                    buildQuickActionTile(
+                      color: Colors.green,
+                      icon: Icons.payments,
+                      subtitle: 'Add or modify course details',
+                      title: 'Process Payments',
+                      onTap:
+                          () => Navigator.pushNamed(
+                            context,
+                            '/payment-verification-screen',
+                          ),
+                    ),
+                    buildQuickActionTile(
+                      color: Colors.purple,
+                      icon: Icons.person_search,
+                      subtitle: 'Access complete student information',
+                      title: 'View Student Profiles',
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),

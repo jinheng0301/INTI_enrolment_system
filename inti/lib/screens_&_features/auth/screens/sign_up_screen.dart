@@ -150,9 +150,18 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 SizedBox(height: 20),
 
                 TextFieldInput(
-                  hintText: 'Enter your username...',
-                  textEditingController: _usernameController,
-                  textInputType: TextInputType.text,
+                  controller: _usernameController,
+                  hintText: 'Enter your username',
+                  labelText: 'Username',
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Username is required';
+                    }
+                    if (value.length < 3) {
+                      return 'At least 3 characters required';
+                    }
+                    return null;
+                  },
                 ),
 
                 SizedBox(height: 20),
@@ -190,8 +199,19 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
                 TextFieldInput(
                   hintText: 'Enter your email...',
-                  textEditingController: _emailController,
-                  textInputType: TextInputType.emailAddress,
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Email is required';
+                    }
+                    if (!RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    ).hasMatch(value)) {
+                      return 'Enter a valid email address';
+                    }
+                    return null;
+                  },
                 ),
 
                 SizedBox(height: 20),

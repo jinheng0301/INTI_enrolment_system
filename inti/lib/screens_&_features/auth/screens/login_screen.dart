@@ -81,19 +81,40 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
               SizedBox(height: 60),
 
+              // Email Field
               TextFieldInput(
-                hintText: 'Enter you email...',
-                textEditingController: _emailController,
-                textInputType: TextInputType.emailAddress,
+                controller: _emailController,
+                hintText: 'Enter your email...',
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Email is required';
+                  }
+                  if (!RegExp(
+                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                  ).hasMatch(value)) {
+                    return 'Enter a valid email address';
+                  }
+                  return null;
+                },
               ),
+              const SizedBox(height: 20),
 
-              SizedBox(height: 20),
-
+              // Password Field
               TextFieldInput(
+                controller: _passwordController,
                 hintText: 'Enter your password...',
-                textEditingController: _passwordController,
-                textInputType: TextInputType.visiblePassword,
-                isPass: true,
+                keyboardType: TextInputType.visiblePassword,
+                obscureText: true,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Password is required';
+                  }
+                  if (value.length < 6) {
+                    return 'Password must be at least 6 characters';
+                  }
+                  return null;
+                },
               ),
 
               SizedBox(height: 30),

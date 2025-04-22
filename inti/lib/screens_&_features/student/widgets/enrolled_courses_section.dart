@@ -157,7 +157,12 @@ class EnrolledCoursesSection extends StatelessWidget {
                         ),
                         const SizedBox(height: 10),
                         ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.pushNamed(
+                              context,
+                              '/course-enrollment-screen',
+                            );
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
                                 Theme.of(context).colorScheme.secondary,

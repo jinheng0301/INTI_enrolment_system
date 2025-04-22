@@ -99,8 +99,26 @@ class AuthRepository {
       }
 
       showSnackBar(context, 'Signed up successfully');
+    } on FirebaseAuthException catch (e) {
+      String message = 'Signup failed';
+      if (e.code == 'email-already-in-use') {
+        message = 'Email already registered';
+      } else if (e.code == 'weak-password') {
+        message = 'Password is too weak';
+      }
+      showSnackBar(context, message);
+      // Delete user if created but Firestore failed
+      if (auth.currentUser != null) {
+        await auth.currentUser!.delete();
+      }
+      rethrow;
     } catch (e) {
       showSnackBar(context, e.toString());
+      // Delete user if created but Firestore failed
+      if (auth.currentUser != null) {
+        await auth.currentUser!.delete();
+      }
+      rethrow;
     }
   }
 
