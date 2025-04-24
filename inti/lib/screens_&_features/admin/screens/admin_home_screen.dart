@@ -445,6 +445,11 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
                       icon: Icons.person_search,
                       subtitle: 'Access complete student information',
                       title: 'View Student Profiles',
+                      onTap:
+                          () => Navigator.pushNamed(
+                            context,
+                            '/user-management-screen',
+                          ),
                     ),
                   ],
                 ),

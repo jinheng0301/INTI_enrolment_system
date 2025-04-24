@@ -199,7 +199,9 @@ class _DrawerListState extends ConsumerState<DrawerList> {
               title: Text('Reports & Analytics'),
             ),
             ListTile(
-              onTap: () {},
+              onTap: () {
+                Navigator.pushNamed(context, '/user-management-screen');
+              },
               leading: Icon(Icons.admin_panel_settings),
               title: Text('User Management'),
             ),

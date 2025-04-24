@@ -5,6 +5,7 @@ import 'package:inti/screens_&_features/admin/screens/admin_home_screen.dart';
 import 'package:inti/screens_&_features/admin/screens/manage_course_screen.dart';
 import 'package:inti/screens_&_features/admin/screens/payment_verification_screen.dart';
 import 'package:inti/screens_&_features/admin/screens/student_enrolment_management_screen.dart';
+import 'package:inti/screens_&_features/admin/screens/user_management_screen.dart';
 import 'package:inti/screens_&_features/auth/screens/login_screen.dart';
 import 'package:inti/screens_&_features/auth/screens/sign_up_screen.dart';
 import 'package:inti/screens_&_features/student/screens/account_management_screen.dart';
@@ -86,6 +87,12 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
     case PaymentVerificationScreen.routeName:
       return MaterialPageRoute(
         builder: (_) => PaymentVerificationScreen(uid: firebaseAuth!),
+      );
+
+    // user management screen
+    case UserManagementScreen.routeName:
+      return MaterialPageRoute(
+        builder: (_) => UserManagementScreen(uid: firebaseAuth!),
       );
 
     // error screen
