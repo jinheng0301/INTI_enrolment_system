@@ -1,13 +1,24 @@
 import 'dart:io';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:inti/models/users.dart';
 import 'package:inti/screens_&_features/auth/repository/auth_repository.dart';
 
+// StreamProvider to listen to authentication state
+final authStateProvider = StreamProvider<User?>((ref) {
+  return FirebaseAuth.instance.authStateChanges();
+});
+
 final authControllerProvider = Provider((ref) {
   final authRepository = ref.watch(authRepositoryProvider);
   return AuthController(authRepository: authRepository, ref: ref);
+});
+
+final allUsersProvider = StreamProvider<List<UserModel>>((ref) {
+  final authController = ref.watch(authControllerProvider);
+  return authController.getAllUsers();
 });
 
 class AuthController {
@@ -81,5 +92,9 @@ class AuthController {
 
   Stream<UserModel> userDatabyId(String userId) {
     return authRepository.userDataById(userId);
+  }
+
+  Stream<List<UserModel>> getAllUsers() {
+    return authRepository.getAllUsers();
   }
 }

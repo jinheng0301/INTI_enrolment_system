@@ -226,4 +226,16 @@ class AuthRepository {
         .snapshots()
         .map((event) => UserModel.fromMap(event.data()!));
   }
+
+  Stream<List<UserModel>> getAllUsers() {
+    return firestore
+        .collection('users')
+        .snapshots()
+        .map(
+          (snapshot) =>
+              snapshot.docs
+                  .map((doc) => UserModel.fromMap(doc.data()))
+                  .toList(),
+        );
+  }
 }

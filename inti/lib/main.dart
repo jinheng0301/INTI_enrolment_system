@@ -3,13 +3,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:inti/common/provider/auth_provider.dart';
 import 'package:inti/common/utils/color.dart';
 import 'package:inti/common/widgets/error.dart';
 import 'package:inti/common/widgets/loader.dart';
 import 'package:inti/firebase_options.dart';
 import 'package:inti/router.dart';
 import 'package:inti/screens_&_features/admin/screens/admin_home_screen.dart';
+import 'package:inti/screens_&_features/auth/controller/auth_controller.dart';
 import 'package:inti/screens_&_features/auth/screens/login_screen.dart';
 import 'package:inti/screens_&_features/student/screens/student_home_screen.dart';
 

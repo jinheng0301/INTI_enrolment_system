@@ -124,7 +124,7 @@ class EnrolledCoursesSection extends StatelessWidget {
                       );
                     },
                     icon: const Icon(Icons.edit),
-                    label: const Text('Manage'),
+                    label: const Text('Enroll Now!'),
                     style: TextButton.styleFrom(
                       foregroundColor: Theme.of(context).colorScheme.secondary,
                     ),

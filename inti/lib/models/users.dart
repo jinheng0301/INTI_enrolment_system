@@ -1,10 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class UserModel {
   final String uid; // Unique User ID from FirebaseAuth
   final String email; // User's email from FirebaseAuth
   final String username; // Custom username
   final String photoUrl; // Profile picture URL
   final String role; // User role (e.g., "student", "admin")
-  final DateTime createdAt; // Account creation time and date
+  final Timestamp createdAt; // Account creation time and date
 
   UserModel({
     required this.uid,
@@ -23,7 +25,7 @@ class UserModel {
       'username': username,
       'photoUrl': photoUrl,
       'role': role,
-      'createdAt': createdAt.toIso8601String(),
+      'createdAt': createdAt,
     };
   }
 
@@ -35,9 +37,7 @@ class UserModel {
       username: map['username'] ?? '',
       photoUrl: map['photoUrl'] ?? '',
       role: map['role'] ?? 'student', // Default role
-      createdAt: DateTime.parse(
-        map['createdAt'] ?? DateTime.now().toIso8601String(),
-      ),
+      createdAt: map['createdAt'] ?? Timestamp.now(),
     );
   }
 }
