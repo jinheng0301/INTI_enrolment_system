@@ -16,6 +16,8 @@ final authControllerProvider = Provider((ref) {
   return AuthController(authRepository: authRepository, ref: ref);
 });
 
+// The .when() method is typically used with Riverpod's AsyncValue type,
+// create a provider that returns an AsyncValue for your user list.
 final allUsersProvider = StreamProvider<List<UserModel>>((ref) {
   final authController = ref.watch(authControllerProvider);
   return authController.getAllUsers();

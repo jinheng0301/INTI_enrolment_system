@@ -28,11 +28,13 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
   bool isLoading = false;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+  List<String> enrolledCourseIds = [];
 
   @override
   void initState() {
     super.initState();
     getData();
+    fetchEnrolledCourse();
   }
 
   @override
@@ -63,6 +65,84 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
     });
   }
 
+  Future<void> fetchEnrolledCourse() async {
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(firebaseAuth)
+              .collection('student_course_enrolment')
+              .get();
+
+      setState(() {
+        enrolledCourseIds =
+            snapshot.docs.map((doc) => doc['courseId'] as String).toList();
+      });
+    } catch (e) {
+      showSnackBar(context, e.toString());
+    }
+  }
+
+  // New method to fetch enrolled courses for a specific user
+  Future<List<Map<String, dynamic>>> fetchUserEnrolledCourses(
+    String userId,
+  ) async {
+    try {
+      // Get enrolled course IDs for the user
+      final enrollmentSnapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(userId)
+              .collection('student_course_enrolment')
+              .get();
+
+      final enrolledIds =
+          enrollmentSnapshot.docs
+              .map((doc) => doc['courseId'] as String)
+              .toList();
+
+      if (enrolledIds.isEmpty) {
+        return [];
+      }
+
+      // Get full course details for each enrolled course
+      List<Map<String, dynamic>> courses = [];
+
+      // Use a batched approach to fetch course details
+      for (String courseId in enrolledIds) {
+        final courseDoc =
+            await FirebaseFirestore.instance
+                .collection('admin_add_courses')
+                .where('courseCode', isEqualTo: courseId)
+                .get();
+
+        if (courseDoc.docs.isNotEmpty) {
+          final courseData = courseDoc.docs.first.data();
+          courses.add(courseData);
+        }
+      }
+
+      return courses;
+    } catch (e) {
+      print('Error fetching enrolled courses: $e');
+      return [];
+    }
+  }
+
+  Stream<List<Map<String, dynamic>>> fetchCourses() {
+    return FirebaseFirestore.instance
+        .collection('admin_add_courses')
+        .snapshots()
+        .map((snapshot) {
+          final courses = snapshot.docs.map((doc) => doc.data()).toList();
+          return courses
+              .where(
+                (course) => !enrolledCourseIds.contains(course['courseCode']),
+              )
+              .toList(); // Filter out already enrolled courses
+        });
+  }
+
   String _formatTimestamp(dynamic timestamp) {
     if (timestamp == null) return 'N/A';
 
@@ -74,7 +154,11 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
     return 'N/A';
   }
 
-  void _showProfileDetails(UserModel user) {
+  void _showProfileDetails(UserModel user) async {
+    // Fetch enrolled courses
+    final enrolledCourses = await fetchUserEnrolledCourses(user.uid);
+    final width = MediaQuery.of(context).size.width;
+
     showDialog(
       context: context,
       builder: (context) {
@@ -82,91 +166,205 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          child: Container(
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // User profile header
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: tabColor.withOpacity(0.3),
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(20),
-                          topRight: Radius.circular(20),
+          child: SingleChildScrollView(
+            child: Container(
+              width: width * .4,
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // User profile header
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        height: 120,
+                        decoration: BoxDecoration(
+                          color: tabColor.withOpacity(0.3),
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(20),
+                            topRight: Radius.circular(20),
+                          ),
                         ),
                       ),
-                    ),
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.white,
-                      backgroundImage: NetworkImage(user.photoUrl),
-                    ),
-                  ],
-                ),
-
-                SizedBox(height: 20),
-
-                Text(
-                  user.username,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
+                      CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Colors.white,
+                        backgroundImage: NetworkImage(user.photoUrl),
+                      ),
+                    ],
                   ),
-                ),
 
-                SizedBox(height: 5),
+                  SizedBox(height: 20),
 
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color:
-                        user.role == 'admin'
-                            ? Colors.blue.withOpacity(0.2)
-                            : Colors.green.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    user.role.toUpperCase(),
+                  Text(
+                    user.username,
                     style: TextStyle(
-                      color: user.role == 'admin' ? Colors.blue : Colors.green,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
+                      color: textColor,
                     ),
                   ),
-                ),
 
-                SizedBox(height: 20),
+                  SizedBox(height: 5),
 
-                // User details
-                _buildInfoItem(Icons.email, 'Email', user.email),
-                _buildInfoItem(Icons.person, 'User ID', user.uid),
-                _buildInfoItem(
-                  Icons.calendar_today,
-                  'Created On',
-                  _formatTimestamp(user.createdAt),
-                ),
-
-                SizedBox(height: 20),
-
-                // Action buttons
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey[200],
-                    foregroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color:
+                          user.role == 'admin'
+                              ? Colors.blue.withOpacity(0.2)
+                              : Colors.green.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      user.role.toUpperCase(),
+                      style: TextStyle(
+                        color:
+                            user.role == 'admin' ? Colors.blue : Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text('Close'),
-                ),
-              ],
+
+                  SizedBox(height: 20),
+
+                  // User details
+                  _buildInfoItem(Icons.email, 'Email', user.email),
+                  _buildInfoItem(Icons.person, 'User ID', user.uid),
+                  _buildInfoItem(
+                    Icons.calendar_today,
+                    'Created On',
+                    _formatTimestamp(user.createdAt),
+                  ),
+
+                  // Enrolled courses section
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.school, color: tabColor, size: 20),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Enrolled Courses',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 12,
+                                ),
+                              ),
+
+                              SizedBox(height: 5),
+
+                              enrolledCourses.isEmpty
+                                  ? Text(
+                                    'No courses enrolled yet',
+                                    style: TextStyle(
+                                      fontStyle: FontStyle.italic,
+                                      color: Colors.grey[500],
+                                    ),
+                                  )
+                                  : Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children:
+                                        enrolledCourses.map((course) {
+                                          return Container(
+                                            margin: EdgeInsets.only(bottom: 8),
+                                            padding: EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[100],
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              border: Border.all(
+                                                color: Colors.grey[300]!,
+                                              ),
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    Container(
+                                                      padding:
+                                                          EdgeInsets.symmetric(
+                                                            horizontal: 8,
+                                                            vertical: 2,
+                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        color: tabColor
+                                                            .withOpacity(0.2),
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              4,
+                                                            ),
+                                                      ),
+                                                      child: Text(
+                                                        course['courseCode'] ??
+                                                            'N/A',
+                                                        style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: tabColor,
+                                                          fontSize: 12,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                SizedBox(height: 5),
+                                                Text(
+                                                  course['courseName'] ??
+                                                      'Unknown Course',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 3),
+                                                Text(
+                                                  '${course['creditHours'] ?? 'N/A'} Credit Hours',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.grey[600],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        }).toList(),
+                                  ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 20),
+
+                  // Action buttons
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey[200],
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text('Close'),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -233,6 +431,7 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
           ),
         ],
       ),
+
       body:
           isLoading
               ? Center(child: Loader())
@@ -358,123 +557,120 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                               ],
                             ),
                           );
-                        }
-
-                        // Display all of the student list
-                        return Column(
-                          children: [
-                            Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 20.0,
-                                vertical: 15.0,
+                        } else {
+                          // Display all of the student list
+                          return Column(
+                            children: [
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 20.0,
+                                  vertical: 15.0,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Student List (${filteredUsers.length})',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    Text(
+                                      _searchQuery.isNotEmpty
+                                          ? 'Filtered results'
+                                          : 'All students',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Student List (${filteredUsers.length})',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  Text(
-                                    _searchQuery.isNotEmpty
-                                        ? 'Filtered results'
-                                        : 'All students',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            // User list
-                            Expanded(
-                              child: ListView.builder(
-                                padding: EdgeInsets.only(bottom: 20),
-                                itemCount: filteredUsers.length,
-                                itemBuilder: (context, index) {
-                                  final user = filteredUsers[index];
-                                  // Only show student accounts in the list
-                                  if (user.role != 'student') {
-                                    return SizedBox.shrink();
-                                  }
-
-                                  return Card(
-                                    margin: const EdgeInsets.symmetric(
-                                      vertical: 5,
-                                      horizontal: 15,
-                                    ),
-                                    elevation: 2,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: ListTile(
-                                      contentPadding: EdgeInsets.symmetric(
+                              Expanded(
+                                child: ListView.builder(
+                                  padding: EdgeInsets.only(bottom: 20),
+                                  itemCount: filteredUsers.length,
+                                  itemBuilder: (context, index) {
+                                    final user = filteredUsers[index];
+                                    if (user.role != 'student') {
+                                      return SizedBox.shrink();
+                                    }
+                                    return Card(
+                                      margin: const EdgeInsets.symmetric(
+                                        vertical: 5,
                                         horizontal: 15,
-                                        vertical: 8,
                                       ),
-                                      leading: CircleAvatar(
-                                        backgroundImage: NetworkImage(
-                                          user.photoUrl,
+                                      elevation: 2,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: ListTile(
+                                        contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 15,
+                                          vertical: 8,
                                         ),
-                                        radius: 25,
-                                      ),
-                                      title: Text(
-                                        user.username,
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
+                                        leading: CircleAvatar(
+                                          backgroundImage: NetworkImage(
+                                            user.photoUrl,
+                                          ),
+                                          radius: 25,
+                                        ),
+                                        title: Text(
+                                          user.username,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        subtitle: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            SizedBox(height: 5),
+                                            Text(
+                                              user.email,
+                                              style: TextStyle(
+                                                color: Colors.grey[600],
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            SizedBox(height: 2),
+                                            Text(
+                                              'Created: ${_formatTimestamp(user.createdAt)}',
+                                              style: TextStyle(
+                                                color: Colors.grey[500],
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        trailing: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            IconButton(
+                                              tooltip: 'View profile details',
+                                              onPressed:
+                                                  () =>
+                                                      _showProfileDetails(user),
+                                              icon: Icon(
+                                                Icons.visibility,
+                                                color: tabColor,
+                                                size: 22,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                      subtitle: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          SizedBox(height: 5),
-                                          Text(
-                                            user.email,
-                                            style: TextStyle(
-                                              color: Colors.grey[600],
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                          SizedBox(height: 2),
-                                          Text(
-                                            'Created: ${_formatTimestamp(user.createdAt)}',
-                                            style: TextStyle(
-                                              color: Colors.grey[500],
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      trailing: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          IconButton(
-                                            tooltip: 'View profile details',
-                                            onPressed:
-                                                () => _showProfileDetails(user),
-                                            icon: Icon(
-                                              Icons.visibility,
-                                              color: tabColor,
-                                              size: 22,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
+                                    );
+                                  },
+                                ),
                               ),
-                            ),
-                          ],
-                        );
+                            ],
+                          );
+                        }
                       },
                     ),
                   ),
