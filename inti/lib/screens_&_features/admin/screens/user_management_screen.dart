@@ -34,7 +34,6 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
   void initState() {
     super.initState();
     getData();
-    fetchEnrolledCourse();
   }
 
   @override
@@ -63,24 +62,6 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
     setState(() {
       isLoading = false;
     });
-  }
-
-  Future<void> fetchEnrolledCourse() async {
-    try {
-      final snapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(firebaseAuth)
-              .collection('student_course_enrolment')
-              .get();
-
-      setState(() {
-        enrolledCourseIds =
-            snapshot.docs.map((doc) => doc['courseId'] as String).toList();
-      });
-    } catch (e) {
-      showSnackBar(context, e.toString());
-    }
   }
 
   // New method to fetch enrolled courses for a specific user
@@ -122,25 +103,13 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
         }
       }
 
+      print('Show enrolled courses: $enrolledIds');
+
       return courses;
     } catch (e) {
       print('Error fetching enrolled courses: $e');
       return [];
     }
-  }
-
-  Stream<List<Map<String, dynamic>>> fetchCourses() {
-    return FirebaseFirestore.instance
-        .collection('admin_add_courses')
-        .snapshots()
-        .map((snapshot) {
-          final courses = snapshot.docs.map((doc) => doc.data()).toList();
-          return courses
-              .where(
-                (course) => !enrolledCourseIds.contains(course['courseCode']),
-              )
-              .toList(); // Filter out already enrolled courses
-        });
   }
 
   String _formatTimestamp(dynamic timestamp) {
