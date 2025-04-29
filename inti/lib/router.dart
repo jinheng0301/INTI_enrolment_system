@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:inti/common/widgets/error.dart';
 import 'package:inti/screens_&_features/admin/screens/admin_home_screen.dart';
+import 'package:inti/screens_&_features/admin/screens/admin_management_screen.dart';
 import 'package:inti/screens_&_features/admin/screens/manage_course_screen.dart';
 import 'package:inti/screens_&_features/admin/screens/payment_verification_screen.dart';
 import 'package:inti/screens_&_features/admin/screens/student_enrolment_management_screen.dart';
@@ -93,6 +94,12 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
     case UserManagementScreen.routeName:
       return MaterialPageRoute(
         builder: (_) => UserManagementScreen(uid: firebaseAuth!),
+      );
+
+    // admin management screen
+    case AdminManagementScreen.routeName:
+      return MaterialPageRoute(
+        builder: (_) => AdminManagementScreen(uid: firebaseAuth!),
       );
 
     // error screen

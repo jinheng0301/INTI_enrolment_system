@@ -451,6 +451,17 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
                             '/user-management-screen',
                           ),
                     ),
+                    buildQuickActionTile(
+                      color: Colors.red,
+                      icon: Icons.admin_panel_settings,
+                      subtitle: 'Access complete admin information',
+                      title: 'View Admin Profiles',
+                      onTap:
+                          () => Navigator.pushNamed(
+                            context,
+                            '/admin-management-screen',
+                          ),
+                    ),
                   ],
                 ),
               ),
