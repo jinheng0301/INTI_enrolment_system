@@ -88,6 +88,7 @@ class ManageCourseRepository {
     required int creditHours,
   }) async {
     try {
+      // 1. Update the course in admin_add_courses collection
       await firestore.collection('admin_add_courses').doc(courseId).update({
         'courseName': courseName,
         'courseCode': courseCode,
@@ -97,7 +98,49 @@ class ManageCourseRepository {
         'availableSeats': availableSeats,
         'creditHours': creditHours,
       });
+      
+      print("✅ Admin course updated: $courseId");
+
+      // 2. Find all students enrolled in this course
+      // Query all user documents
+      QuerySnapshot userDocs = await firestore.collection('users').get();
+      
+      print("🔍 Checking ${userDocs.docs.length} users for enrollment in course: $courseId");
+      
+      // For each user, check their student_course_enrolment subcollection
+      for (var userDoc in userDocs.docs) {
+        String userId = userDoc.id;
+        
+        // Find enrollment documents where courseId matches
+        QuerySnapshot enrollmentDocs = await firestore
+            .collection('users')
+            .doc(userId)
+            .collection('student_course_enrolment')
+            .where('courseId', isEqualTo: courseId)
+            .get();
+        
+        // Update each enrollment document found
+        for (var enrollDoc in enrollmentDocs.docs) {
+          await firestore
+              .collection('users')
+              .doc(userId)
+              .collection('student_course_enrolment')
+              .doc(enrollDoc.id)
+              .update({
+                'courseName': courseName,
+                'lecturerName': lecturerName,
+                'schedule': schedule,
+                'venue': venue,
+                'creditHours': creditHours,
+              });
+          
+          print("✅ Updated enrollment for user: $userId, enrollment: ${enrollDoc.id}");
+        }
+      }
+      
+      print("✅ All student enrollments updated for course: $courseId");
     } catch (e) {
+      print("❌ Error editing course: $e");
       throw Exception('Failed to edit course: $e');
     }
   }
